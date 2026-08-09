@@ -16,14 +16,9 @@ let currentUser = null;
 let appData = null;
 let currentSlabs = [];
 let currentSettings = {};
-let fpMethod = 'email';
-let fpVerificationId = null;
-let signupVerificationId = null;
 
 function getEl(id) { return document.getElementById(id); }
 const $ = (sel, ctx) => Array.from((ctx || document).querySelectorAll(sel));
-
-const STORAGE_KEY = 'cabCalcData';
 
 function getDefaultSettings() {
     return {
@@ -43,30 +38,25 @@ function getDefaultSlabs() {
     ];
 }
 
-function loadLocalData() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-            const data = JSON.parse(raw);
-            if (!data.shifts) data.shifts = [];
-            if (!data.settings) data.settings = getDefaultSettings();
-            if (!data.slabs || !data.slabs.length) data.slabs = getDefaultSlabs();
-            if (!data.profile) data.profile = { name: '', phone: '', email: '', picture: null };
-            return data;
-        }
-    } catch (_) { }
-    return { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs(), profile: { name: '', phone: '', email: '', picture: null } };
+// ─── FIRESTORE DATA HANDLING ───
+function loadData() {
+    if (!appData) {
+        return { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs(), profile: { name: '', phone: '', email: '', picture: null } };
+    }
+    return appData;
 }
 
-function saveLocalData(data) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function saveData(data) {
     appData = data;
+    if (currentUser) {
+        db.collection('users').doc(currentUser.uid).set(data)
+          .catch(error => showToast('Cloud Sync Error: ' + error.message));
+    }
 }
 
 // ─── SHIFT CALCULATION LOGIC ───
 function calculateShift(revenue, totalTrips, airportTrips, onlineTrips, hiredKm, tolls, settings) {
     const normalTrips = Math.max(0, totalTrips - airportTrips - onlineTrips);
-
     const normalCut = settings.normalCut || 2.50;
     const airportCut = settings.airportCut || 20.00;
     const onlineCut = settings.onlineCut || 6.00;
@@ -92,13 +82,8 @@ function calculateCommission(shifts, settings, slabs) {
 
     shifts.forEach(shift => {
         const calc = calculateShift(
-            shift.revenue || 0,
-            shift.totalTrips || 0,
-            shift.airportTrips || 0,
-            shift.onlineTrips || 0,
-            shift.hiredKm || 0, 
-            shift.tolls || 0,
-            settings
+            shift.revenue || 0, shift.totalTrips || 0, shift.airportTrips || 0,
+            shift.onlineTrips || 0, shift.hiredKm || 0, shift.tolls || 0, settings
         );
         totalCleanMoney += calc.cleanMoney;
     });
@@ -119,7 +104,6 @@ function calculateCommission(shifts, settings, slabs) {
     }
 
     const finalCommission = totalCleanMoney * (matchedSlab.pct / 100);
-
     return { totalCleanMoney, dailyAverage, matchedSlab, finalCommission };
 }
 
@@ -181,13 +165,12 @@ window.addEventListener('hashchange', function() {
     }
     if (hash === 'slab') renderSlabTab();
     if (hash === 'rates') loadRatesSettings();
-    if (hash === 'profile') loadProfileSettings();
 });
 
 getEl('headerBackBtn').addEventListener('click', () => window.history.back());
 
 function renderDashboard() {
-    const data = loadLocalData();
+    const data = loadData();
     const shifts = data.shifts || [];
     const settings = data.settings || getDefaultSettings();
     const slabs = data.slabs || getDefaultSlabs();
@@ -230,16 +213,16 @@ function renderDashboard() {
 
 window.deleteShift = function(idx) {
     if (confirm('Delete this shift?')) {
-        const data = loadLocalData();
+        const data = loadData();
         data.shifts.splice(idx, 1);
-        saveLocalData(data);
+        saveData(data);
         renderDashboard();
         showToast('Shift deleted');
     }
 };
 
 function updateStats() {
-    const data = loadLocalData();
+    const data = loadData();
     const commData = calculateCommission(data.shifts, data.settings, data.slabs);
     getEl('sumTotalRevenue').textContent = commData.totalCleanMoney.toFixed(2) + ' AED';
     getEl('sumNet').textContent = commData.finalCommission.toFixed(2) + ' AED';
@@ -253,7 +236,7 @@ function updateStats() {
 
 // ─── SHIFT MODAL ───
 window.openShiftModal = function(editIndex) {
-    const data = loadLocalData();
+    const data = loadData();
     if (editIndex !== undefined && editIndex >= 0 && editIndex < data.shifts.length) {
         const shift = data.shifts[editIndex];
         getEl('shiftDate').value = shift.date || '';
@@ -283,7 +266,7 @@ getEl('fabOpen').addEventListener('click', () => openShiftModal(-1));
 getEl('shiftCancelBtn').addEventListener('click', () => getEl('shiftModal').classList.remove('open'));
 
 function updateShiftPreview() {
-    const data = loadLocalData();
+    const data = loadData();
     const settings = data.settings || getDefaultSettings();
     const revenue = Number(getEl('shiftRevenue').value) || 0;
     const totalTrips = Number(getEl('shiftTotalTrips').value) || 0;
@@ -319,14 +302,14 @@ getEl('shiftForm').addEventListener('submit', function(e) {
         showToast('Valid date, revenue, and trips required.'); return;
     }
 
-    const data = loadLocalData();
+    const data = loadData();
     const idx = parseInt(getEl('shiftEditIndex').value, 10);
     const shiftData = { date, revenue, totalTrips, airportTrips, onlineTrips, hiredKm, tolls };
 
     if (idx >= 0 && idx < data.shifts.length) data.shifts[idx] = shiftData;
     else data.shifts.push(shiftData);
 
-    saveLocalData(data);
+    saveData(data);
     getEl('shiftModal').classList.remove('open');
     renderDashboard();
     showToast('Shift saved');
@@ -334,7 +317,7 @@ getEl('shiftForm').addEventListener('submit', function(e) {
 
 // ─── RATES TAB ───
 function loadRatesSettings() {
-    const data = loadLocalData();
+    const data = loadData();
     getEl('settingNormalCut').value = data.settings.normalCut || 2.50;
     getEl('settingOnlineCut').value = data.settings.onlineCut || 6.00;
     getEl('settingAirportCut').value = data.settings.airportCut || 20.00;
@@ -342,19 +325,19 @@ function loadRatesSettings() {
 }
 
 getEl('saveSettingsBtn').addEventListener('click', () => {
-    const data = loadLocalData();
+    const data = loadData();
     data.settings.normalCut = Number(getEl('settingNormalCut').value) || 0;
     data.settings.onlineCut = Number(getEl('settingOnlineCut').value) || 0;
     data.settings.airportCut = Number(getEl('settingAirportCut').value) || 0;
     data.settings.fuelRate = Number(getEl('settingFuelRate').value) || 0;
-    saveLocalData(data);
+    saveData(data);
     showToast('Rates saved');
     renderDashboard();
 });
 
 // ─── SLAB TAB ───
 function renderSlabTab() {
-    const data = loadLocalData();
+    const data = loadData();
     currentSlabs = data.slabs || getDefaultSlabs();
     
     const tbody = getEl('slabTableBody');
@@ -378,7 +361,7 @@ function renderSlabTab() {
 }
 
 function updateCycleDisplay() {
-    const data = loadLocalData();
+    const data = loadData();
     const commData = calculateCommission(data.shifts, data.settings, currentSlabs);
     getEl('monthlyRevenue').textContent = commData.totalCleanMoney.toFixed(2) + ' AED';
     getEl('slabDailyAverage').textContent = commData.dailyAverage.toFixed(2) + ' AED';
@@ -405,9 +388,9 @@ getEl('saveSlabsBtn').addEventListener('click', () => {
         const pct = Number(r.querySelector('.slab-pct').value)||0;
         newSlabs.push({min, max, pct});
     });
-    const data = loadLocalData();
+    const data = loadData();
     data.slabs = newSlabs.sort((a, b) => a.min - b.min);
-    saveLocalData(data);
+    saveData(data);
     showToast('Slabs saved');
     renderSlabTab();
     renderDashboard();
@@ -436,14 +419,17 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
         if (action === 'dashboard') switchTab('dashboard');
         if (action === 'target') switchTab('slab');
         if (action === 'cutting') switchTab('rates');
-        if (action === 'settings') switchTab('profile');
         
         if (action === 'terms') getEl('termsModal').classList.add('open');
         if (action === 'feedback') getEl('feedbackModal').classList.add('open');
         
         if (action === 'logout') {
-            showScreen('login-screen');
-            showToast('Logged out');
+            auth.signOut().then(() => {
+                appData = null;
+                currentUser = null;
+                showScreen('login-screen');
+                showToast('Logged out');
+            });
         }
     });
 });
@@ -453,8 +439,6 @@ getEl('termsAcceptBtn').addEventListener('click', () => getEl('termsModal').clas
 getEl('feedbackModalClose').addEventListener('click', () => getEl('feedbackModal').classList.remove('open'));
 
 // ─── LOGIN & AUTHENTICATION LOGIC ───
-
-// لاگ ان اور سائن اپ ٹیبز کے درمیان سوئچ کرنا
 document.querySelectorAll('.login-tabs button').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.login-tabs button').forEach(b => b.classList.remove('active'));
@@ -470,7 +454,6 @@ document.querySelectorAll('.login-tabs button').forEach(btn => {
     });
 });
 
-// Sign Up (نیا اکاؤنٹ بنانا)
 getEl('signupSubmitBtn').addEventListener('click', () => {
     const email = getEl('signupEmail').value;
     const pass = getEl('signupPassword').value;
@@ -481,17 +464,9 @@ getEl('signupSubmitBtn').addEventListener('click', () => {
     }
     
     auth.createUserWithEmailAndPassword(email, pass)
-        .then((userCredential) => {
-            showToast('Account Created successfully!');
-            showScreen('main-app');
-            switchTab('dashboard');
-        })
-        .catch((error) => {
-            showToast(error.message); // یہ فائر بیس کا اصل ایرر دکھائے گا
-        });
+        .catch((error) => showToast(error.message));
 });
 
-// Log In (اکاؤنٹ میں داخل ہونا)
 getEl('loginSubmitBtn').addEventListener('click', () => {
     const email = getEl('loginEmail').value;
     const pass = getEl('loginPassword').value;
@@ -502,17 +477,32 @@ getEl('loginSubmitBtn').addEventListener('click', () => {
     }
     
     auth.signInWithEmailAndPassword(email, pass)
-        .then((userCredential) => {
-            showToast('Logged In successfully!');
-            showScreen('main-app');
-            switchTab('dashboard');
-        })
-        .catch((error) => {
-            showToast(error.message);
-        });
+        .catch((error) => showToast(error.message));
 });
 
-// Boot Application
-showScreen('login-screen');
+// ─── AUTH STATE OBSERVER (BOOT) ───
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        currentUser = user;
+        db.collection('users').doc(user.uid).get().then((doc) => {
+            if (doc.exists) {
+                appData = doc.data();
+                if (!appData.shifts) appData.shifts = [];
+                if (!appData.settings) appData.settings = getDefaultSettings();
+                if (!appData.slabs) appData.slabs = getDefaultSlabs();
+            } else {
+                appData = { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs() };
+            }
+            showScreen('main-app');
+            switchTab('dashboard');
+        }).catch(error => {
+            showToast("Error loading data: " + error.message);
+        });
+    } else {
+        currentUser = null;
+        appData = null;
+        showScreen('login-screen');
+    }
+});
 
 
