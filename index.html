@@ -20,7 +20,7 @@
     <div id="offlineBadge" class="offline-badge">You are offline — data is saved locally.</div>
     <div id="toast" class="toast"></div>
 
-    <!-- ─── LOGIN ─── -->
+        <!-- ─── LOGIN ─── -->
     <div id="login-screen" class="screen active">
         <div class="login-header">
             <div class="logo"><img src="icon-512.png" alt="CabCalc Logo" style="width:70px; height:70px; border-radius:12px; object-fit:cover;" /></div>
@@ -58,25 +58,6 @@
                 <input type="password" id="signupPassword" placeholder="Min 6 characters" />
             </div>
             <button class="btn-primary" id="signupSubmitBtn">Create Account</button>
-
-            <div id="otpSection" class="otp-section">
-                <p style="font-size:14px;color:#4a5a6e;text-align:center;">
-                    We sent a code to <strong id="otpPhoneDisplay">+971 50 ****567</strong>
-                </p>
-                <div class="otp-digits">
-                    <input type="text" maxlength="1" class="otp-digit" />
-                    <input type="text" maxlength="1" class="otp-digit" />
-                    <input type="text" maxlength="1" class="otp-digit" />
-                    <input type="text" maxlength="1" class="otp-digit" />
-                    <input type="text" maxlength="1" class="otp-digit" />
-                    <input type="text" maxlength="1" class="otp-digit" />
-                </div>
-                <div class="otp-actions">
-                    <button class="btn-primary" id="otpVerifyBtn" style="width:auto;padding:10px 28px;">Verify</button>
-                    <span class="timer" id="otpTimer">2:00</span>
-                    <button class="resend" id="otpResendBtn" disabled>Resend</button>
-                </div>
-            </div>
         </div>
 
         <div id="loginForm" class="login-form">
@@ -91,74 +72,8 @@
             </div>
             <button class="btn-primary" id="loginSubmitBtn">Log In</button>
             <p style="text-align:center;margin-top:12px;font-size:13px;color:#6a7a8e;">
-                By continuing you agree to our <a href="#" id="loginTermsLink">Terms & Privacy</a>.
+                By continuing you agree to our <a href="privacy.html" id="loginTermsLink" target="_blank">Terms & Privacy</a>.
             </p>
-            <div class="social-login">
-                <div class="divider">or continue with</div>
-                <div class="social-btns">
-                    <button class="google" id="socialGoogle" title="Google">G</button>
-                    <button class="facebook" id="socialFacebook" title="Facebook">f</button>
-                    <button class="x" id="socialX" title="X">𝕏</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="forgotPwContainer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #dce0e6;">
-            <div class="forgot-step active" data-step="1">
-                <div class="back-link" id="fpBackToLogin">← Back to Login</div>
-                <div class="step-title">Recover Account</div>
-                <div class="step-sub">Choose how you'd like to reset your password.</div>
-                <div class="choice-grid">
-                    <button id="fpChooseEmail">Email</button>
-                    <button id="fpChoosePhone">Phone</button>
-                </div>
-            </div>
-            <div class="forgot-step" data-step="2">
-                <div class="back-link" id="fpBackToStep1">← Back</div>
-                <div class="step-title" id="fpStep2Title">Enter your Email</div>
-                <div class="step-sub" id="fpStep2Sub">We'll send a verification code.</div>
-                <div class="form-group">
-                    <label id="fpStep2Label">Email</label>
-                    <div class="input-with-prefix" id="fpPhonePrefixWrap" style="display:none;">
-                        <span class="prefix">+971</span>
-                        <input type="tel" id="fpStep2Input" placeholder="50 123 4567" maxlength="9" />
-                    </div>
-                    <input type="email" id="fpStep2InputEmail" placeholder="you@example.com" style="display:none;" />
-                </div>
-                <button class="btn-primary" id="fpSendOtpBtn">Send OTP</button>
-            </div>
-            <div class="forgot-step" data-step="3">
-                <div class="back-link" id="fpBackToStep2">← Back</div>
-                <div class="step-title">Verify Code</div>
-                <div class="step-sub">Enter the 6-digit code sent to <strong id="fpOtpDestination">your email</strong>.</div>
-                <div class="otp-digits">
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                    <input type="text" maxlength="1" class="fp-otp-digit" />
-                </div>
-                <div class="otp-actions">
-                    <button class="btn-primary" id="fpVerifyOtpBtn" style="width:auto;padding:10px 28px;">Verify</button>
-                    <span class="timer" id="fpOtpTimer">2:00</span>
-                    <button class="resend" id="fpResendOtpBtn" disabled>Resend</button>
-                </div>
-            </div>
-            <div class="forgot-step" data-step="4">
-                <div class="back-link" id="fpBackToStep3">← Back</div>
-                <div class="step-title">Reset Password</div>
-                <div class="step-sub">Create a new password for your account.</div>
-                <div class="form-group">
-                    <label>New Password</label>
-                    <input type="password" id="fpNewPassword" placeholder="Min 6 characters" />
-                </div>
-                <div class="form-group">
-                    <label>Confirm Password</label>
-                    <input type="password" id="fpConfirmPassword" placeholder="Re-enter new password" />
-                </div>
-                <button class="btn-primary" id="fpSavePasswordBtn">Save Password</button>
-            </div>
         </div>
     </div>
 

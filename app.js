@@ -165,6 +165,7 @@ window.addEventListener('hashchange', function() {
     }
     if (hash === 'slab') renderSlabTab();
     if (hash === 'rates') loadRatesSettings();
+    if (hash === 'profile') loadProfileSettings();
 });
 
 getEl('headerBackBtn').addEventListener('click', () => window.history.back());
@@ -419,7 +420,7 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
         if (action === 'dashboard') switchTab('dashboard');
         if (action === 'target') switchTab('slab');
         if (action === 'cutting') switchTab('rates');
-        
+        if (action === 'settings') switchTab('profile');
         if (action === 'terms') getEl('termsModal').classList.add('open');
         if (action === 'feedback') getEl('feedbackModal').classList.add('open');
         
@@ -504,5 +505,107 @@ auth.onAuthStateChanged((user) => {
         showScreen('login-screen');
     }
 });
+
+// ─── FORGOT PASSWORD LOGIC ───
+getEl('forgotPwLink').addEventListener('click', () => {
+    const email = getEl('loginEmail').value;
+    
+    if (!email) {
+        showToast('Error: Enter your email address in the box first.');
+        return;
+    }
+    
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            showToast('Success: Password reset link sent to your email.');
+        })
+        .catch((error) => {
+            showToast('Error: ' + error.message);
+        });
+});
+
+// ─── AUTO-FILL SLABS (OCR) LOGIC ───
+const slabImgInput = getEl('slabImageInputFile');
+
+// Upload Button
+getEl('slabImageInput').addEventListener('click', () => {
+    slabImgInput.removeAttribute('capture');
+    slabImgInput.click();
+});
+
+// Camera Button
+getEl('slabCameraBtn').addEventListener('click', () => {
+    slabImgInput.setAttribute('capture', 'environment');
+    slabImgInput.click();
+});
+
+// Preview Image
+slabImgInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+        const url = URL.createObjectURL(e.target.files[0]);
+        getEl('slabImagePreview').innerHTML = `<img src="${url}" style="max-width:100%; border-radius:8px;" />`;
+        getEl('slabOcrBtn').disabled = false;
+        getEl('ocrStatus').className = 'ocr-status hidden';
+    }
+});
+
+// Run OCR
+getEl('slabOcrBtn').addEventListener('click', () => {
+    const imgEl = getEl('slabImagePreview').querySelector('img');
+    if (!imgEl) return;
+    
+    const status = getEl('ocrStatus');
+    status.textContent = 'Scanning image... Please wait, this takes time.';
+    status.className = 'ocr-status loading';
+    
+    Tesseract.recognize(imgEl.src, 'eng')
+        .then(({ data: { text } }) => {
+            status.textContent = 'Scan complete. Check parsed numbers below.';
+            status.className = 'ocr-status success';
+            
+            // Extracting numbers roughly
+            const numbers = text.match(/\d+(\.\d+)?/g);
+            if (numbers && numbers.length > 0) {
+                alert("Extracted Numbers:\n" + numbers.join(", ") + "\n\nNote: You must manually enter these into the table boxes.");
+            } else {
+                alert("Could not find clear numbers in the image.");
+            }
+        })
+        .catch(err => {
+            status.textContent = 'Scan failed. Image might be too blurry.';
+            status.className = 'ocr-status error';
+        });
+});
+
+// ─── PROFILE TAB LOGIC ───
+function loadProfileSettings() {
+    const data = loadData();
+    if (data.profile) {
+        getEl('profileName').value = data.profile.name || '';
+        getEl('profilePhone').value = data.profile.phone || '';
+        getEl('profileEmail').value = currentUser ? currentUser.email : (data.profile.email || '');
+    }
+}
+
+// جب یوزر پروفائل کے ٹیب پر آئے گا تو ڈیٹا لوڈ ہو جائے گا
+window.addEventListener('hashchange', function() {
+    if (window.location.hash.replace('#', '') === 'profile') {
+        loadProfileSettings();
+    }
+});
+
+getEl('saveProfileBtn').addEventListener('click', () => {
+    const data = loadData();
+    if (!data.profile) data.profile = {};
+    data.profile.name = getEl('profileName').value;
+    data.profile.phone = getEl('profilePhone').value;
+    data.profile.email = getEl('profileEmail').value;
+    saveData(data);
+    showToast('Profile saved successfully!');
+});
+
+// ─── OFFLINE/ONLINE NETWORK STATUS ───
+window.addEventListener('offline', () => getEl('offlineBadge').classList.add('show'));
+window.addEventListener('online', () => getEl('offlineBadge').classList.remove('show'));
 
 
