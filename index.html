@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>CabCalc — Shift Calculator</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#f4f7f9" />
+    <link rel="icon" type="image/png" href="icon-512.png" />
+    
+    <link rel="stylesheet" href="style.css" />
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+</head>
+<body>
+
+    <div id="offlineBadge" class="offline-badge">You are offline — data is saved locally.</div>
+    <div id="toast" class="toast"></div>
+
+    <!-- ─── LOGIN ─── -->
+    <div id="login-screen" class="screen active">
+        <div class="login-header">
+            <div class="logo"><img src="icon-512.png" alt="CabCalc Logo" style="width:70px; height:70px; border-radius:12px; object-fit:cover;" /></div>
+            <h1>CabCalc</h1>
+            <p>Professional Shift Calculator</p>
+        </div>
+
+        <div class="login-tabs" id="loginTabs">
+            <button class="active" data-tab="login">Log In</button>
+            <button data-tab="signup">Sign Up</button>
+        </div>
+
+        <div id="signupForm" class="login-form" style="display:none;">
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="signupFirstName" placeholder="Ahmed" />
+            </div>
+            <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="signupLastName" placeholder="Al Maktoum" />
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="signupEmail" placeholder="you@example.com" />
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <div class="input-with-prefix">
+                    <span class="prefix">+971</span>
+                    <input type="tel" id="signupPhone" placeholder="50 123 4567" maxlength="9" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="signupPassword" placeholder="Min 6 characters" />
+            </div>
+            <button class="btn-primary" id="signupSubmitBtn">Create Account</button>
+
+            <div id="otpSection" class="otp-section">
+                <p style="font-size:14px;color:#4a5a6e;text-align:center;">
+                    We sent a code to <strong id="otpPhoneDisplay">+971 50 ****567</strong>
+                </p>
+                <div class="otp-digits">
+                    <input type="text" maxlength="1" class="otp-digit" />
+                    <input type="text" maxlength="1" class="otp-digit" />
+                    <input type="text" maxlength="1" class="otp-digit" />
+                    <input type="text" maxlength="1" class="otp-digit" />
+                    <input type="text" maxlength="1" class="otp-digit" />
+                    <input type="text" maxlength="1" class="otp-digit" />
+                </div>
+                <div class="otp-actions">
+                    <button class="btn-primary" id="otpVerifyBtn" style="width:auto;padding:10px 28px;">Verify</button>
+                    <span class="timer" id="otpTimer">2:00</span>
+                    <button class="resend" id="otpResendBtn" disabled>Resend</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loginForm" class="login-form">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@example.com" />
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="••••••••" />
+                <div class="forgot-pw-link" id="forgotPwLink">Forgot password?</div>
+            </div>
+            <button class="btn-primary" id="loginSubmitBtn">Log In</button>
+            <p style="text-align:center;margin-top:12px;font-size:13px;color:#6a7a8e;">
+                By continuing you agree to our <a href="#" id="loginTermsLink">Terms & Privacy</a>.
+            </p>
+            <div class="social-login">
+                <div class="divider">or continue with</div>
+                <div class="social-btns">
+                    <button class="google" id="socialGoogle" title="Google">G</button>
+                    <button class="facebook" id="socialFacebook" title="Facebook">f</button>
+                    <button class="x" id="socialX" title="X">𝕏</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="forgotPwContainer" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid #dce0e6;">
+            <div class="forgot-step active" data-step="1">
+                <div class="back-link" id="fpBackToLogin">← Back to Login</div>
+                <div class="step-title">Recover Account</div>
+                <div class="step-sub">Choose how you'd like to reset your password.</div>
+                <div class="choice-grid">
+                    <button id="fpChooseEmail">Email</button>
+                    <button id="fpChoosePhone">Phone</button>
+                </div>
+            </div>
+            <div class="forgot-step" data-step="2">
+                <div class="back-link" id="fpBackToStep1">← Back</div>
+                <div class="step-title" id="fpStep2Title">Enter your Email</div>
+                <div class="step-sub" id="fpStep2Sub">We'll send a verification code.</div>
+                <div class="form-group">
+                    <label id="fpStep2Label">Email</label>
+                    <div class="input-with-prefix" id="fpPhonePrefixWrap" style="display:none;">
+                        <span class="prefix">+971</span>
+                        <input type="tel" id="fpStep2Input" placeholder="50 123 4567" maxlength="9" />
+                    </div>
+                    <input type="email" id="fpStep2InputEmail" placeholder="you@example.com" style="display:none;" />
+                </div>
+                <button class="btn-primary" id="fpSendOtpBtn">Send OTP</button>
+            </div>
+            <div class="forgot-step" data-step="3">
+                <div class="back-link" id="fpBackToStep2">← Back</div>
+                <div class="step-title">Verify Code</div>
+                <div class="step-sub">Enter the 6-digit code sent to <strong id="fpOtpDestination">your email</strong>.</div>
+                <div class="otp-digits">
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                    <input type="text" maxlength="1" class="fp-otp-digit" />
+                </div>
+                <div class="otp-actions">
+                    <button class="btn-primary" id="fpVerifyOtpBtn" style="width:auto;padding:10px 28px;">Verify</button>
+                    <span class="timer" id="fpOtpTimer">2:00</span>
+                    <button class="resend" id="fpResendOtpBtn" disabled>Resend</button>
+                </div>
+            </div>
+            <div class="forgot-step" data-step="4">
+                <div class="back-link" id="fpBackToStep3">← Back</div>
+                <div class="step-title">Reset Password</div>
+                <div class="step-sub">Create a new password for your account.</div>
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="fpNewPassword" placeholder="Min 6 characters" />
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="fpConfirmPassword" placeholder="Re-enter new password" />
+                </div>
+                <button class="btn-primary" id="fpSavePasswordBtn">Save Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── ONBOARDING RATES ─── -->
+    <div id="onboarding-rates" class="screen">
+        <div class="login-header" style="padding-top:20px;">
+            <div class="logo"></div>
+            <h1 style="font-size:22px;">Rates & Cutting</h1>
+            <p style="font-size:14px;">Set your per-trip deductions and fuel cost.</p>
+        </div>
+        <div class="onboard-progress">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+        </div>
+        <div class="card">
+            <div class="form-group">
+                <label>Normal Trip Cut (AED)</label>
+                <input type="number" id="onboardNormalCut" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+                <label>Online Booking Trip Cut (AED)</label>
+                <input type="number" id="onboardOnlineCut" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+                <label>Airport Trip Cut (AED)</label>
+                <input type="number" id="onboardAirportCut" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div class="form-group">
+                <label>Fuel Rate (AED / km)</label>
+                <input type="number" id="onboardFuelRate" step="0.01" min="0" placeholder="0.00" />
+            </div>
+            <div style="display:flex;gap:10px;margin-top:6px;">
+                <button class="btn-secondary" id="onboardRatesBack" style="flex:1;">Back</button>
+                <button class="btn-primary" id="onboardRatesNext" style="flex:2;">Next →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── ONBOARDING SLABS ─── -->
+    <div id="onboarding-slabs" class="screen">
+        <div class="login-header" style="padding-top:20px;">
+            <div class="logo"></div>
+            <h1 style="font-size:22px;">Commission Slabs</h1>
+            <p style="font-size:14px;">Define slabs based on daily average clean money.</p>
+        </div>
+        <div class="onboard-progress">
+            <span class="dot done"></span>
+            <span class="dot active"></span>
+        </div>
+        <div class="card">
+            <div class="flex-between" style="margin-bottom:8px;">
+                <span class="font-bold">Commission Slabs (Daily Avg)</span>
+                <button class="btn-outline" id="onboardAddSlabBtn" style="padding:4px 12px;font-size:12px;">+ Add</button>
+            </div>
+            <div class="table-wrap slab-table">
+                <table>
+                    <thead><tr><th>Min (AED)</th><th>Max (AED)</th><th>%</th><th style="width:36px;"></th></tr></thead>
+                    <tbody id="onboardSlabBody"></tbody>
+                </table>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:4px;">
+                <button class="btn-secondary" id="onboardSlabsBack" style="flex:1;">Back</button>
+                <button class="btn-primary" id="onboardSlabsFinish" style="flex:2;">Finish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── MAIN APP ─── -->
+    <div id="main-app" class="screen" style="display:none;">
+        <header class="app-header" style="position:relative;">
+            <div style="display: flex; align-items: center;">
+                <button id="headerBackBtn" style="display:none; font-size:22px; margin-right:12px; background:none; border:none; color:#1a1f36; padding-right:8px; line-height:1;">←</button>
+                <div class="brand"><img src="icon-512.png" alt="Logo" style="width:24px; height:24px; border-radius:6px; margin-right:6px;" /> Cab<span>Calc</span></div>
+            </div>
+            <button class="avatar-btn" id="profileBtn">
+                <span class="placeholder" id="avatarPlaceholder">👤</span>
+                <img id="avatarImage" style="display:none;" alt="avatar" />
+            </button>
+            <div class="dropdown" id="profileDropdown">
+                <button class="dropdown-item" data-action="dashboard">Dashboard</button>
+                <button class="dropdown-item" data-action="target">Slab & Cycle</button>
+                <button class="dropdown-item" data-action="cutting">Rates & Cutting</button>
+                <button class="dropdown-item" data-action="settings">Profile</button>
+                <div class="divider"></div>
+                <button class="dropdown-item" data-action="invite">Invite Friend</button>
+                <button class="dropdown-item" data-action="export-backup">Export Backup</button>
+                <button class="dropdown-item" data-action="import-backup">Import Backup</button>
+                <button class="dropdown-item" data-action="terms">Terms</button>
+                <button class="dropdown-item" data-action="feedback">Feedback</button>
+                <div class="divider"></div>
+                <button class="dropdown-item" data-action="logout" style="color:#dc2626;">Logout</button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="label">Shifts</div>
+                    <div class="value" id="shiftCount">0 shifts</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total Clean Money</div>
+                    <div class="value" id="sumTotalRevenue">0.00 AED</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Total Commission</div>
+                    <div class="value" id="sumNet">0.00 AED</div>
+                </div>
+                <div class="stat">
+                    <div class="label">Current Slab</div>
+                    <div class="value" id="dashboardCommissionPct">— <span class="sub">no slab</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>Shift Log</span>
+                    <span class="badge" id="shiftCountBadge">0</span>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Revenue</th>
+                                <th>Trips</th>
+                                <th>Airport</th>
+                                <th>Online</th>
+                                <th>Cut</th>
+                                <th>Fuel</th>
+                                <th>Tolls</th>
+                                <th>Clean Money</th>
+                                <th style="width:60px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="shiftTableBody"></tbody>
+                    </table>
+                    <div id="emptyShifts" class="empty-state" style="display:none;">No shifts logged yet.<br />Tap the + button to add one.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RATES TAB -->
+        <div id="tab-rates" class="tab-content">
+            <div class="card">
+                <div class="card-title">Cutting Rates</div>
+                <div class="form-group">
+                    <label>Normal Trip Cut (AED)</label>
+                    <input type="number" id="settingNormalCut" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label>Online Booking Trip Cut (AED)</label>
+                    <input type="number" id="settingOnlineCut" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label>Airport Trip Cut (AED)</label>
+                    <input type="number" id="settingAirportCut" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label>Fuel Rate (AED / km)</label>
+                    <input type="number" id="settingFuelRate" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <button class="btn-primary" id="saveSettingsBtn">Save Rates</button>
+                <div id="settingsSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Rates saved!</div>
+            </div>
+        </div>
+
+        <!-- SLAB TAB -->
+        <div id="tab-slab" class="tab-content">
+            <div class="cycle-display" style="margin-bottom:14px;">
+                <div class="flex-between">
+                    <span class="label">Total Clean Money</span>
+                    <span class="sub" id="cycleRangeDisplay">—</span>
+                </div>
+                <div class="flex-between" style="margin-top:4px;">
+                    <span class="value" id="monthlyRevenue">0.00 AED</span>
+                    <span class="sub">Total</span>
+                </div>
+                <div class="flex-between" style="margin-top:4px;">
+                    <span class="value" id="slabDailyAverage">—</span>
+                    <span class="sub">Daily Avg</span>
+                </div>
+                <div class="flex-between" style="margin-top:4px;">
+                    <span class="value" id="slabCommissionPct">—</span>
+                    <span class="sub">Commission</span>
+                </div>
+                <div class="flex-between" style="margin-top:4px;">
+                    <span class="value" id="slabNetIncome">—</span>
+                    <span class="sub">Est. Income</span>
+                </div>
+                <div class="flex-between" style="margin-top:2px;font-size:13px;color:#6a7a8e;">
+                    <span>Matched Slab (Daily Avg): <strong id="matchedSlabDesc">—</strong></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span>Commission Slabs</span>
+                    <button class="btn-outline" id="addSlabRowBtn" style="padding:2px 12px;font-size:12px;">+ Add</button>
+                </div>
+                <div class="table-wrap slab-table">
+                    <table>
+                        <thead><tr><th>Min (AED)</th><th>Max (AED)</th><th>%</th><th style="width:36px;"></th></tr></thead>
+                        <tbody id="slabTableBody"></tbody>
+                    </table>
+                </div>
+                <button class="btn-primary" id="saveSlabsBtn" style="margin-top:10px;">Save Slabs</button>
+                <div id="slabSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Slabs saved!</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Auto‑Fill Slabs</div>
+                <p class="text-sm text-muted" style="margin-bottom:8px;">Upload or capture a slab table image to extract values.</p>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn-outline" id="slabImageInput" style="flex:1;padding:8px;">Upload</button>
+                    <button class="btn-outline" id="slabCameraBtn" style="flex:1;padding:8px;">Camera</button>
+                    <button class="btn-primary" id="slabOcrBtn" style="flex:1.5;padding:8px;" disabled>Auto‑Fill</button>
+                </div>
+                <input type="file" id="slabImageInputFile" accept="image/*" style="display:none;" />
+                <div class="slab-image-preview" id="slabImagePreview"><div class="empty">No image loaded</div></div>
+                <div id="ocrStatus" class="ocr-status hidden"></div>
+            </div>
+        </div>
+
+        <!-- PROFILE TAB -->
+        <div id="tab-profile" class="tab-content">
+            <div class="card">
+                <div class="profile-pic-wrap">
+                    <div class="pic-preview" id="profilePicPreview">
+                        <img id="profilePicImg" style="display:none;" alt="profile" />
+                        <span id="profilePicPlaceholder" style="font-size:40px;">👤</span>
+                    </div>
+                    <div class="pic-actions">
+                        <button id="profilePicUploadBtn">Upload</button>
+                        <button id="profilePicCameraBtn">Camera</button>
+                        <button id="profilePicClearBtn" style="color:#dc2626;">Clear</button>
+                    </div>
+                    <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="profileName" placeholder="Ahmed Al Maktoum" />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <div class="input-with-prefix">
+                        <span class="prefix">+971</span>
+                        <input type="tel" id="profilePhone" placeholder="50 123 4567" maxlength="9" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="profileEmail" placeholder="you@example.com" />
+                </div>
+                <button class="btn-primary" id="saveProfileBtn">Save Profile</button>
+                <div id="profileSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Profile saved!</div>
+            </div>
+        </div>
+
+        <button class="fab" id="fabOpen" aria-label="Add shift">+</button>
+    </div>
+
+    <!-- ─── SHIFT MODAL ─── -->
+    <div class="modal-overlay" id="shiftModal">
+        <div class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="shiftModalTitle">New Shift Entry</h2>
+                    <div class="sub" id="shiftModalSub">Enter today's shift details — calculations are automatic.</div>
+                </div>
+                <button class="close-btn" id="modalClose">✕</button>
+            </div>
+            <form id="shiftForm">
+                <input type="hidden" id="shiftEditIndex" value="-1" />
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="shiftDate" />
+                </div>
+                <div class="form-group">
+                    <label>Gross Revenue (AED)</label>
+                    <input type="number" id="shiftRevenue" step="0.01" min="0" placeholder="0.00" />
+                </div>
+                <div class="form-group">
+                    <label>Total Trips</label>
+                    <input type="number" id="shiftTotalTrips" step="1" min="0" placeholder="0" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group">
+                        <label>Airport Trips</label>
+                        <input type="number" id="shiftAirport" step="1" min="0" value="0" />
+                    </div>
+                    <div class="form-group">
+                        <label>Online Bookings</label>
+                        <input type="number" id="shiftOnline" step="1" min="0" value="0" />
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                    <div class="form-group">
+                        <label>Hired KMs (With Customer)</label>
+                        <input type="number" id="shiftHiredKm" step="0.1" min="0" placeholder="0.00" />
+                    </div>
+                    <div class="form-group">
+                        <label>Salik / Tolls (AED)</label>
+                        <input type="number" id="shiftTolls" step="0.01" min="0" placeholder="0.00" />
+                    </div>
+                </div>
+
+                <div style="background:#f4f7f9;border-radius:10px;padding:12px;margin:10px 0;border:1px solid #e6eaef;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:14px;">
+                        <span class="text-muted">Normal Trips</span><span id="previewNormal" class="font-bold">0</span>
+                        <span class="text-muted">Company Cut</span><span id="previewCompanyCut" class="font-bold">0.00 AED</span>
+                        <span class="text-muted">Fuel Cost</span><span id="previewFuel" class="font-bold">0.00 AED</span>
+                        <span class="text-muted">Tolls</span><span id="previewTolls" class="font-bold">0.00 AED</span>
+                        <span class="text-muted" style="font-weight:600;">Clean Money</span><span id="previewNet" class="font-bold" style="color:#166534;">0.00 AED</span>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" class="btn-secondary" id="shiftCancelBtn" style="flex:1;">Cancel</button>
+                    <button type="submit" class="btn-primary" id="shiftSubmitBtn" style="flex:2;">Save Shift</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ─── TERMS & FEEDBACK MODALS ─── -->
+    <div class="modal-overlay" id="termsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Terms & Privacy</h2>
+                <button class="close-btn" id="termsModalClose">✕</button>
+            </div>
+            <div style="font-size:14px;color:#4a5a6e;line-height:1.6;max-height:50vh;overflow-y:auto;padding-right:4px;">
+                <p><strong>CabCalc</strong> is a driver earnings calculating tool. All data is stored locally on your device by default.</p>
+                <p style="margin-top:8px;">We do not collect, store, or share your personal data unless you explicitly enable cloud sync.</p>
+            </div>
+            <button class="btn-primary" id="termsAcceptBtn" style="margin-top:12px;">I Understand</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Feedback</h2>
+                <button class="close-btn" id="feedbackModalClose">✕</button>
+            </div>
+            <form id="feedbackForm">
+                <div class="form-group">
+                    <label>Your Message</label>
+                    <textarea id="feedbackMessage" rows="4" style="width:100%;padding:10px;border-radius:10px;background:#f0f3f8;border:1px solid transparent;"></textarea>
+                </div>
+                <button class="btn-primary" type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <input type="file" id="importBackupInput" accept=".json" style="display:none;" />
+    <div id="recaptcha-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
