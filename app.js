@@ -498,15 +498,18 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
         }
 
         if (action === 'download-image') {
-            switchTab('dashboard');
+            const activeTab = document.querySelector('.tab-content.active');
+            if (!activeTab) return;
+
             showToast('Generating report image...');
+            
             setTimeout(() => {
-                const targetEl = getEl('tab-dashboard');
                 if(typeof html2canvas === 'undefined') {
                     showToast('Error: html2canvas library missing in index.html');
                     return;
                 }
-                html2canvas(targetEl, { backgroundColor: '#f4f7f9', scale: 2 }).then(canvas => {
+                
+                html2canvas(activeTab, { backgroundColor: '#f4f7f9', scale: 2 }).then(canvas => {
                     const imgData = canvas.toDataURL('image/png');
                     const downloadAnchor = document.createElement('a');
                     downloadAnchor.setAttribute("href", imgData);
@@ -841,3 +844,5 @@ window.addEventListener('offline', () => {
     getEl('offlineBadge').classList.add('show');
 });
 window.addEventListener('online', () => getEl('offlineBadge').classList.remove('show'));
+
+
