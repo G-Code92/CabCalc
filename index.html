@@ -20,7 +20,6 @@
 
     <!-- ─── AD BANNER CONTAINER ─── -->
     <div id="ad-container" class="ad-banner">
-        <!-- Google AdSense / Ad Network Script will be placed here -->
         <span style="color: #8a9bb0; font-size: 12px; font-weight: 500;">Advertisement</span>
     </div>
 
@@ -79,7 +78,7 @@
             </div>
             <button class="btn-primary" id="loginSubmitBtn">Log In</button>
             <p style="text-align:center;margin-top:12px;font-size:13px;color:#6a7a8e;">
-                By continuing you agree to our <a href="privacy.html" id="loginTermsLink" target="_blank">Terms & Privacy</a>.
+                By continuing you agree to our Terms & Privacy.
             </p>
         </div>
     </div>
@@ -95,18 +94,14 @@
                 <span class="placeholder" id="avatarPlaceholder">👤</span>
                 <img id="avatarImage" style="display:none;" alt="avatar" />
             </button>
+            <!-- UPDATED CLEAN DROPDOWN -->
             <div class="dropdown" id="profileDropdown">
                 <button class="dropdown-item" data-action="dashboard">Dashboard</button>
                 <button class="dropdown-item" data-action="target">Slab & Cycle</button>
                 <button class="dropdown-item" data-action="cutting">Rates & Cutting</button>
-                <button class="dropdown-item" data-action="settings">Profile</button>
-                <div class="divider"></div>
                 <button class="dropdown-item" data-action="history">History</button>
-                <button class="dropdown-item" data-action="invite">Invite Friend</button>
-                <button class="dropdown-item" data-action="export-backup">Export Backup</button>
-                <button class="dropdown-item" data-action="download-image">Download Report (PNG)</button>
-                <button class="dropdown-item" data-action="terms">Terms</button>
-                <button class="dropdown-item" data-action="feedback">Feedback</button>
+                <div class="divider"></div>
+                <button class="dropdown-item" data-action="settings">⚙️ Settings</button>
                 <div class="divider"></div>
                 <button class="dropdown-item" data-action="logout" style="color:#dc2626;">Logout</button>
             </div>
@@ -182,7 +177,6 @@
                     <input type="number" id="settingFuelRate" step="0.01" min="0" placeholder="0.00" />
                 </div>
                 <button class="btn-primary" id="saveSettingsBtn" style="margin-top: 10px;">Save Rates</button>
-                <div id="settingsSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Rates saved!</div>
             </div>
         </div>
 
@@ -226,10 +220,8 @@
                     </table>
                 </div>
                 <button class="btn-primary" id="saveSlabsBtn" style="margin-top:10px;">Save Slabs</button>
-                <div id="slabSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Slabs saved!</div>
             </div>
 
-            <!-- CYCLE SETTINGS CARD -->
             <div class="card">
                 <div class="card-title">Cycle Settings</div>
                 <div class="form-group">
@@ -239,7 +231,7 @@
                 <p style="font-size:12px; color:#6a7a8e; margin-top:4px;">End date is calculated automatically.</p>
                 <button class="btn-primary" id="saveCycleBtn" style="margin-top:10px;">Save Cycle Date</button>
             </div>
-
+            
             <div class="card">
                 <div class="card-title">Auto‑Fill Slabs</div>
                 <p class="text-sm text-muted" style="margin-bottom:8px;">Upload or capture a slab table image to extract values.</p>
@@ -254,8 +246,8 @@
             </div>
         </div>
 
-        <!-- PROFILE TAB -->
-        <div id="tab-profile" class="tab-content">
+        <!-- NEW SETTINGS & PROFILE TAB -->
+        <div id="tab-settings" class="tab-content">
             <div class="card">
                 <div class="profile-pic-wrap">
                     <div class="pic-preview" id="profilePicPreview">
@@ -282,10 +274,20 @@
                 </div>
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" id="profileEmail" placeholder="you@example.com" />
+                    <input type="email" id="profileEmail" placeholder="you@example.com" disabled style="background:#e6eaef; color:#6a7a8e;" />
                 </div>
                 <button class="btn-primary" id="saveProfileBtn">Save Profile</button>
-                <div id="profileSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Profile saved!</div>
+            </div>
+
+            <!-- DEDICATED ACTION BUTTONS -->
+            <div class="card">
+                <div class="card-title">App Actions & Legal</div>
+                <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+                    <button class="btn-outline" id="btnExportBackup" style="text-align:left; padding:12px;">📦 Export Data Backup (JSON)</button>
+                    <button class="btn-outline" id="btnTerms" style="text-align:left; padding:12px;">📄 Terms, Privacy & Disclaimer</button>
+                    <button class="btn-outline" id="btnFeedback" style="text-align:left; padding:12px;">💬 Send Feedback</button>
+                    <button class="btn-primary" id="btnDeleteAccount" style="background:#dc2626; margin-top:10px;">⚠️ Delete Account</button>
+                </div>
             </div>
         </div>
         
@@ -309,6 +311,8 @@
             </div>
         </div>
 
+        <!-- TWO FLOATING BUTTONS OPPOSITE TO EACH OTHER -->
+        <button class="fab-download" id="fabDownload" aria-label="Download Report">📥</button>
         <button class="fab" id="fabOpen" aria-label="Add shift">+</button>
     </div>
 
@@ -374,7 +378,7 @@
         </div>
     </div>
 
-    <!-- ─── TERMS & FEEDBACK MODALS ─── -->
+    <!-- ─── UPDATED TERMS & FEEDBACK MODALS ─── -->
     <div class="modal-overlay" id="termsModal">
         <div class="modal">
             <div class="modal-header">
@@ -382,8 +386,12 @@
                 <button class="close-btn" id="termsModalClose">✕</button>
             </div>
             <div style="font-size:14px;color:#4a5a6e;line-height:1.6;max-height:50vh;overflow-y:auto;padding-right:4px;">
-                <p><strong>CabCalc</strong> is a driver earnings calculating tool. All data is stored locally on your device by default.</p>
-                <p style="margin-top:8px;">We do not collect, store, or share your personal data unless you explicitly enable cloud sync.</p>
+                <p><strong>CabCalc</strong> is a driver earnings calculating tool. To keep your records safe and synced across devices, your data is securely stored on the cloud using Google Firebase.</p>
+                <p style="margin-top:8px;">We do not sell, trade, or share your personal data with any third-party marketing agencies.</p>
+                <div style="margin-top:12px; padding:10px; background:#fff3cd; color:#856404; border-radius:8px; border:1px solid #ffeeba; font-size:13px; line-height:1.5;">
+                    <strong style="display:block; margin-bottom:4px;">⚠️ Disclaimer:</strong> 
+                    This application is an independent calculator designed for personal use by drivers. The calculations provided are estimates based solely on the values entered by the user. CabCalc is not affiliated with any official taxi company, and these estimates may not exactly match your official payroll or company deductions.
+                </div>
             </div>
             <button class="btn-primary" id="termsAcceptBtn" style="margin-top:12px;">I Understand</button>
         </div>

@@ -79,14 +79,10 @@ function calculateCommission(shifts, settings, slabs) {
     if (!shifts || shifts.length === 0) return { totalCleanMoney: 0, dailyAverage: 0, matchedSlab: null, finalCommission: 0 };
 
     let totalCleanMoney = 0;
-    
-    // منفرد تاریخوں کو محفوظ کرنے کے لیے Set کا استعمال
     const uniqueDates = new Set();
 
     shifts.forEach(shift => {
-        if (shift.date) {
-            uniqueDates.add(shift.date);
-        }
+        if (shift.date) uniqueDates.add(shift.date);
         
         const calc = calculateShift(
             shift.revenue || 0, shift.totalTrips || 0, shift.airportTrips || 0,
@@ -96,7 +92,6 @@ function calculateCommission(shifts, settings, slabs) {
     });
 
     let daysWorked = uniqueDates.size > 0 ? uniqueDates.size : shifts.length;
-
     const dailyAverage = totalCleanMoney / daysWorked;
     const sortedSlabs = [...slabs].sort((a, b) => a.min - b.min);
     let matchedSlab = sortedSlabs[0] || { min: 0, max: 999999, pct: 0 };
@@ -116,7 +111,6 @@ function calculateCommission(shifts, settings, slabs) {
     return { totalCleanMoney, dailyAverage, matchedSlab, finalCommission };
 }
 
-// ─── CYCLE FILTER LOGIC ───
 function getCurrentCycleShifts(shifts, startDay) {
     const now = new Date();
     let year = now.getFullYear();
@@ -162,8 +156,10 @@ function showScreen(name) {
         if (name === 'main-app') {
             target.style.display = 'block';
             getEl('fabOpen').classList.remove('fab-hidden');
+            getEl('fabDownload').classList.remove('fab-hidden');
         } else {
             getEl('fabOpen').classList.add('fab-hidden');
+            getEl('fabDownload').classList.add('fab-hidden');
         }
     }
 }
@@ -178,7 +174,7 @@ function switchTab(tabId) {
 
 window.addEventListener('hashchange', function() {
     const hash = window.location.hash.replace('#', '') || 'dashboard';
-    const tabs = ['tab-dashboard', 'tab-rates', 'tab-slab', 'tab-profile', 'tab-history'];
+    const tabs = ['tab-dashboard', 'tab-rates', 'tab-slab', 'tab-settings', 'tab-history'];
     tabs.forEach(id => {
         const el = getEl(id);
         if(el) el.classList.remove('active');
@@ -195,7 +191,7 @@ window.addEventListener('hashchange', function() {
     }
     if (hash === 'slab') renderSlabTab();
     if (hash === 'rates') loadRatesSettings();
-    if (hash === 'profile') loadProfileSettings();
+    if (hash === 'settings') loadProfileSettings();
     if (hash === 'history') renderHistoryTab();
 });
 
@@ -470,63 +466,8 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
         if (action === 'dashboard') switchTab('dashboard');
         if (action === 'target') switchTab('slab');
         if (action === 'cutting') switchTab('rates');
-        if (action === 'settings') switchTab('profile');
+        if (action === 'settings') switchTab('settings');
         if (action === 'history') switchTab('history');
-        
-        if (action === 'invite') {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'CabCalc',
-                    text: 'Try CabCalc to easily calculate your driving shifts and net income!',
-                    url: window.location.href
-                }).catch(err => console.log('Share error:', err));
-            } else {
-                showToast('Sharing not supported on this browser. Copy the URL manually.');
-            }
-        }
-        
-        if (action === 'export-backup') {
-            const data = loadData();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "CabCalc_Backup.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast('Backup exported successfully!');
-        }
-
-        if (action === 'download-image') {
-            const activeTab = document.querySelector('.tab-content.active');
-            if (!activeTab) return;
-
-            showToast('Generating report image...');
-            
-            setTimeout(() => {
-                if(typeof html2canvas === 'undefined') {
-                    showToast('Error: html2canvas library missing in index.html');
-                    return;
-                }
-                
-                html2canvas(activeTab, { backgroundColor: '#f4f7f9', scale: 2 }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/png');
-                    const downloadAnchor = document.createElement('a');
-                    downloadAnchor.setAttribute("href", imgData);
-                    downloadAnchor.setAttribute("download", "CabCalc_Report.png");
-                    document.body.appendChild(downloadAnchor);
-                    downloadAnchor.click();
-                    downloadAnchor.remove();
-                    showToast('Image downloaded successfully!');
-                }).catch(err => {
-                    showToast('Error generating image.');
-                    console.error(err);
-                });
-            }, 500);
-        }
-        
-        if (action === 'terms') getEl('termsModal').classList.add('open');
-        if (action === 'feedback') getEl('feedbackModal').classList.add('open');
         
         if (action === 'logout') {
             auth.signOut().then(() => {
@@ -537,6 +478,70 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
             });
         }
     });
+});
+
+// ─── FAB DOWNLOAD LOGIC ───
+getEl('fabDownload').addEventListener('click', () => {
+    const activeTab = document.querySelector('.tab-content.active');
+    if (!activeTab) return;
+
+    showToast('Generating report image...');
+    
+    setTimeout(() => {
+        if(typeof html2canvas === 'undefined') {
+            showToast('Error: html2canvas library missing in index.html');
+            return;
+        }
+        
+        html2canvas(activeTab, { backgroundColor: '#f4f7f9', scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", imgData);
+            downloadAnchor.setAttribute("download", "CabCalc_Report.png");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Image downloaded successfully!');
+        }).catch(err => {
+            showToast('Error generating image.');
+            console.error(err);
+        });
+    }, 500);
+});
+
+// ─── SETTINGS TAB ACTION BUTTONS ───
+getEl('btnExportBackup').addEventListener('click', () => {
+    const data = loadData();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "CabCalc_Backup.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showToast('Backup exported successfully!');
+});
+
+getEl('btnTerms').addEventListener('click', () => getEl('termsModal').classList.add('open'));
+getEl('btnFeedback').addEventListener('click', () => getEl('feedbackModal').classList.add('open'));
+
+getEl('btnDeleteAccount').addEventListener('click', () => {
+    if(confirm('WARNING: Are you sure you want to permanently delete your account and all saved shifts? This action CANNOT be undone.')) {
+        const user = auth.currentUser;
+        if(user) {
+            db.collection('users').doc(user.uid).delete().then(() => {
+                user.delete().then(() => {
+                    showToast('Account permanently deleted.');
+                }).catch(error => {
+                    if (error.code === 'auth/requires-recent-login') {
+                        showToast('Security Action: Please log out and log back in to delete your account.');
+                    } else {
+                        showToast('Error: ' + error.message);
+                    }
+                });
+            }).catch(err => showToast('Error clearing database: ' + err.message));
+        }
+    }
 });
 
 getEl('termsModalClose').addEventListener('click', () => getEl('termsModal').classList.remove('open'));
@@ -769,7 +774,6 @@ getEl('saveProfileBtn').addEventListener('click', () => {
     if (!data.profile) data.profile = {};
     data.profile.name = getEl('profileName').value;
     data.profile.phone = getEl('profilePhone').value;
-    data.profile.email = getEl('profileEmail').value;
     saveData(data);
     updateHeaderAvatar();
     showToast('Profile saved successfully!');
