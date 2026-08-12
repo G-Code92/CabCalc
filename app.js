@@ -562,6 +562,7 @@ auth.onAuthStateChanged((user) => {
             } else {
                 appData = { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs() };
             }
+            updateHeaderAvatar();
             showScreen('main-app');
             switchTab('dashboard');
         }).catch(error => {
@@ -641,6 +642,21 @@ getEl('slabOcrBtn').addEventListener('click', () => {
 });
 
 // ─── PROFILE TAB LOGIC ───
+function updateHeaderAvatar() {
+    const data = loadData();
+    const avatarImg = getEl('avatarImage');
+    const avatarPlaceholder = getEl('avatarPlaceholder');
+    if (data && data.profile && data.profile.picture) {
+        avatarImg.src = data.profile.picture;
+        avatarImg.style.display = 'block';
+        avatarPlaceholder.style.display = 'none';
+    } else {
+        avatarImg.src = '';
+        avatarImg.style.display = 'none';
+        avatarPlaceholder.style.display = 'flex';
+    }
+}
+
 function loadProfileSettings() {
     const data = loadData();
     if (data.profile) {
@@ -657,6 +673,7 @@ function loadProfileSettings() {
             getEl('profilePicImg').src = '';
             getEl('profilePicPlaceholder').style.display = 'flex';
         }
+        updateHeaderAvatar();
     }
 }
 
@@ -691,6 +708,7 @@ picInput.addEventListener('change', function(e) {
         if(!data.profile) data.profile = {};
         data.profile.picture = base64String;
         saveData(data);
+        updateHeaderAvatar();
         showToast('Picture saved!');
     };
     reader.readAsDataURL(file);
@@ -704,6 +722,7 @@ getEl('profilePicClearBtn').addEventListener('click', () => {
     const data = loadData();
     if(data.profile) data.profile.picture = null;
     saveData(data);
+    updateHeaderAvatar();
     showToast('Picture removed!');
 });
 
