@@ -79,15 +79,23 @@ function calculateCommission(shifts, settings, slabs) {
     if (!shifts || shifts.length === 0) return { totalCleanMoney: 0, dailyAverage: 0, matchedSlab: null, finalCommission: 0 };
 
     let totalCleanMoney = 0;
-    let daysWorked = shifts.length;
+    
+    // منفرد تاریخوں کو محفوظ کرنے کے لیے Set کا استعمال
+    const uniqueDates = new Set();
 
     shifts.forEach(shift => {
+        if (shift.date) {
+            uniqueDates.add(shift.date);
+        }
+        
         const calc = calculateShift(
             shift.revenue || 0, shift.totalTrips || 0, shift.airportTrips || 0,
             shift.onlineTrips || 0, shift.hiredKm || 0, shift.tolls || 0, settings
         );
         totalCleanMoney += calc.cleanMoney;
     });
+
+    let daysWorked = uniqueDates.size > 0 ? uniqueDates.size : shifts.length;
 
     const dailyAverage = totalCleanMoney / daysWorked;
     const sortedSlabs = [...slabs].sort((a, b) => a.min - b.min);
@@ -488,6 +496,31 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
             downloadAnchor.remove();
             showToast('Backup exported successfully!');
         }
+
+        if (action === 'download-image') {
+            switchTab('dashboard');
+            showToast('Generating report image...');
+            setTimeout(() => {
+                const targetEl = getEl('tab-dashboard');
+                if(typeof html2canvas === 'undefined') {
+                    showToast('Error: html2canvas library missing in index.html');
+                    return;
+                }
+                html2canvas(targetEl, { backgroundColor: '#f4f7f9', scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    const downloadAnchor = document.createElement('a');
+                    downloadAnchor.setAttribute("href", imgData);
+                    downloadAnchor.setAttribute("download", "CabCalc_Report.png");
+                    document.body.appendChild(downloadAnchor);
+                    downloadAnchor.click();
+                    downloadAnchor.remove();
+                    showToast('Image downloaded successfully!');
+                }).catch(err => {
+                    showToast('Error generating image.');
+                    console.error(err);
+                });
+            }, 500);
+        }
         
         if (action === 'terms') getEl('termsModal').classList.add('open');
         if (action === 'feedback') getEl('feedbackModal').classList.add('open');
@@ -646,6 +679,8 @@ function updateHeaderAvatar() {
     const data = loadData();
     const avatarImg = getEl('avatarImage');
     const avatarPlaceholder = getEl('avatarPlaceholder');
+    if (!avatarImg || !avatarPlaceholder) return;
+
     if (data && data.profile && data.profile.picture) {
         avatarImg.src = data.profile.picture;
         avatarImg.style.display = 'block';
@@ -733,6 +768,7 @@ getEl('saveProfileBtn').addEventListener('click', () => {
     data.profile.phone = getEl('profilePhone').value;
     data.profile.email = getEl('profileEmail').value;
     saveData(data);
+    updateHeaderAvatar();
     showToast('Profile saved successfully!');
 });
 
@@ -800,7 +836,8 @@ function renderHistoryTab() {
 }
 
 // ─── OFFLINE/ONLINE NETWORK STATUS ───
-window.addEventListener('offline', () => getEl('offlineBadge').classList.add('show'));
+window.addEventListener('offline', () => {
+    getEl('offlineBadge').textContent = "Internet connection required for the free version.";
+    getEl('offlineBadge').classList.add('show');
+});
 window.addEventListener('online', () => getEl('offlineBadge').classList.remove('show'));
-
-

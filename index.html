@@ -14,10 +14,17 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
-    <div id="offlineBadge" class="offline-badge">You are offline — data is saved locally.</div>
+    <!-- ─── AD BANNER CONTAINER ─── -->
+    <div id="ad-container" class="ad-banner">
+        <!-- Google AdSense / Ad Network Script will be placed here -->
+        <span style="color: #8a9bb0; font-size: 12px; font-weight: 500;">Advertisement</span>
+    </div>
+
+    <div id="offlineBadge" class="offline-badge">Internet connection required for the free version.</div>
     <div id="toast" class="toast"></div>
 
     <!-- ─── LOGIN ─── -->
@@ -77,70 +84,6 @@
         </div>
     </div>
 
-    <!-- ─── ONBOARDING RATES ─── -->
-    <div id="onboarding-rates" class="screen">
-        <div class="login-header" style="padding-top:20px;">
-            <div class="logo"></div>
-            <h1 style="font-size:22px;">Rates & Cutting</h1>
-            <p style="font-size:14px;">Set your per-trip deductions and fuel cost.</p>
-        </div>
-        <div class="onboard-progress">
-            <span class="dot active"></span>
-            <span class="dot"></span>
-        </div>
-        <div class="card">
-            <div class="form-group">
-                <label>Normal Trip Cut (AED)</label>
-                <input type="number" id="onboardNormalCut" step="0.01" min="0" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-                <label>Online Booking Trip Cut (AED)</label>
-                <input type="number" id="onboardOnlineCut" step="0.01" min="0" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-                <label>Airport Trip Cut (AED)</label>
-                <input type="number" id="onboardAirportCut" step="0.01" min="0" placeholder="0.00" />
-            </div>
-            <div class="form-group">
-                <label>Fuel Rate (AED / km)</label>
-                <input type="number" id="onboardFuelRate" step="0.01" min="0" placeholder="0.00" />
-            </div>
-            <div style="display:flex;gap:10px;margin-top:6px;">
-                <button class="btn-secondary" id="onboardRatesBack" style="flex:1;">Back</button>
-                <button class="btn-primary" id="onboardRatesNext" style="flex:2;">Next →</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ─── ONBOARDING SLABS ─── -->
-    <div id="onboarding-slabs" class="screen">
-        <div class="login-header" style="padding-top:20px;">
-            <div class="logo"></div>
-            <h1 style="font-size:22px;">Commission Slabs</h1>
-            <p style="font-size:14px;">Define slabs based on daily average clean money.</p>
-        </div>
-        <div class="onboard-progress">
-            <span class="dot done"></span>
-            <span class="dot active"></span>
-        </div>
-        <div class="card">
-            <div class="flex-between" style="margin-bottom:8px;">
-                <span class="font-bold">Commission Slabs (Daily Avg)</span>
-                <button class="btn-outline" id="onboardAddSlabBtn" style="padding:4px 12px;font-size:12px;">+ Add</button>
-            </div>
-            <div class="table-wrap slab-table">
-                <table>
-                    <thead><tr><th>Min (AED)</th><th>Max (AED)</th><th>%</th><th style="width:36px;"></th></tr></thead>
-                    <tbody id="onboardSlabBody"></tbody>
-                </table>
-            </div>
-            <div style="display:flex;gap:10px;margin-top:4px;">
-                <button class="btn-secondary" id="onboardSlabsBack" style="flex:1;">Back</button>
-                <button class="btn-primary" id="onboardSlabsFinish" style="flex:2;">Finish</button>
-            </div>
-        </div>
-    </div>
-
     <!-- ─── MAIN APP ─── -->
     <div id="main-app" class="screen" style="display:none;">
         <header class="app-header" style="position:relative;">
@@ -161,6 +104,7 @@
                 <button class="dropdown-item" data-action="history">History</button>
                 <button class="dropdown-item" data-action="invite">Invite Friend</button>
                 <button class="dropdown-item" data-action="export-backup">Export Backup</button>
+                <button class="dropdown-item" data-action="download-image">Download Report (PNG)</button>
                 <button class="dropdown-item" data-action="terms">Terms</button>
                 <button class="dropdown-item" data-action="feedback">Feedback</button>
                 <div class="divider"></div>
@@ -399,7 +343,7 @@
                     </div>
                     <div class="form-group">
                         <label>Online Bookings</label>
-                        <input type="number" id="shiftOnline" step="1" min="0" value="0" />
+                        <input type="number" id="shiftOnline" step="0" min="0" value="0" />
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
