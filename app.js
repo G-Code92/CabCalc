@@ -25,7 +25,8 @@ function getDefaultSettings() {
         airportCut: 20.00,
         onlineCut: 6.00,
         normalCut: 2.50,
-        fuelRate: 0.60
+        fuelRate: 0.60,
+        cycleStartDay: 1
     };
 }
 
@@ -148,7 +149,7 @@ function switchTab(tabId) {
 
 window.addEventListener('hashchange', function() {
     const hash = window.location.hash.replace('#', '') || 'dashboard';
-    const tabs = ['tab-dashboard', 'tab-rates', 'tab-slab', 'tab-profile'];
+    const tabs = ['tab-dashboard', 'tab-rates', 'tab-slab', 'tab-profile', 'tab-history'];
     tabs.forEach(id => {
         const el = getEl(id);
         if(el) el.classList.remove('active');
@@ -166,6 +167,7 @@ window.addEventListener('hashchange', function() {
     if (hash === 'slab') renderSlabTab();
     if (hash === 'rates') loadRatesSettings();
     if (hash === 'profile') loadProfileSettings();
+    if (hash === 'history') renderHistoryTab();
 });
 
 getEl('headerBackBtn').addEventListener('click', () => window.history.back());
@@ -323,6 +325,7 @@ function loadRatesSettings() {
     getEl('settingOnlineCut').value = data.settings.onlineCut || 6.00;
     getEl('settingAirportCut').value = data.settings.airportCut || 20.00;
     getEl('settingFuelRate').value = data.settings.fuelRate || 0.60;
+    getEl('settingCycleStart').value = data.settings.cycleStartDay || 1;
 }
 
 getEl('saveSettingsBtn').addEventListener('click', () => {
@@ -331,8 +334,9 @@ getEl('saveSettingsBtn').addEventListener('click', () => {
     data.settings.onlineCut = Number(getEl('settingOnlineCut').value) || 0;
     data.settings.airportCut = Number(getEl('settingAirportCut').value) || 0;
     data.settings.fuelRate = Number(getEl('settingFuelRate').value) || 0;
+    data.settings.cycleStartDay = Number(getEl('settingCycleStart').value) || 1;
     saveData(data);
-    showToast('Rates saved');
+    showToast('Settings saved');
     renderDashboard();
 });
 
@@ -421,6 +425,32 @@ document.querySelectorAll('.dropdown-item[data-action]').forEach(item => {
         if (action === 'target') switchTab('slab');
         if (action === 'cutting') switchTab('rates');
         if (action === 'settings') switchTab('profile');
+        if (action === 'history') switchTab('history');
+        
+        if (action === 'invite') {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'CabCalc',
+                    text: 'Try CabCalc to easily calculate your driving shifts and net income!',
+                    url: window.location.href
+                }).catch(err => console.log('Share error:', err));
+            } else {
+                showToast('Sharing not supported on this browser. Copy the URL manually.');
+            }
+        }
+        
+        if (action === 'export-backup') {
+            const data = loadData();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "CabCalc_Backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Backup exported successfully!');
+        }
+        
         if (action === 'terms') getEl('termsModal').classList.add('open');
         if (action === 'feedback') getEl('feedbackModal').classList.add('open');
         
@@ -527,19 +557,16 @@ getEl('forgotPwLink').addEventListener('click', () => {
 // ─── AUTO-FILL SLABS (OCR) LOGIC ───
 const slabImgInput = getEl('slabImageInputFile');
 
-// Upload Button
 getEl('slabImageInput').addEventListener('click', () => {
     slabImgInput.removeAttribute('capture');
     slabImgInput.click();
 });
 
-// Camera Button
 getEl('slabCameraBtn').addEventListener('click', () => {
     slabImgInput.setAttribute('capture', 'environment');
     slabImgInput.click();
 });
 
-// Preview Image
 slabImgInput.addEventListener('change', (e) => {
     if (e.target.files && e.target.files[0]) {
         const url = URL.createObjectURL(e.target.files[0]);
@@ -549,7 +576,6 @@ slabImgInput.addEventListener('change', (e) => {
     }
 });
 
-// Run OCR
 getEl('slabOcrBtn').addEventListener('click', () => {
     const imgEl = getEl('slabImagePreview').querySelector('img');
     if (!imgEl) return;
@@ -563,7 +589,6 @@ getEl('slabOcrBtn').addEventListener('click', () => {
             status.textContent = 'Scan complete. Check parsed numbers below.';
             status.className = 'ocr-status success';
             
-            // Extracting numbers roughly
             const numbers = text.match(/\d+(\.\d+)?/g);
             if (numbers && numbers.length > 0) {
                 alert("Extracted Numbers:\n" + numbers.join(", ") + "\n\nNote: You must manually enter these into the table boxes.");
@@ -584,14 +609,64 @@ function loadProfileSettings() {
         getEl('profileName').value = data.profile.name || '';
         getEl('profilePhone').value = data.profile.phone || '';
         getEl('profileEmail').value = currentUser ? currentUser.email : (data.profile.email || '');
+        
+        if (data.profile.picture) {
+            getEl('profilePicImg').src = data.profile.picture;
+            getEl('profilePicImg').style.display = 'block';
+            getEl('profilePicPlaceholder').style.display = 'none';
+        } else {
+            getEl('profilePicImg').style.display = 'none';
+            getEl('profilePicImg').src = '';
+            getEl('profilePicPlaceholder').style.display = 'flex';
+        }
     }
 }
 
-// جب یوزر پروفائل کے ٹیب پر آئے گا تو ڈیٹا لوڈ ہو جائے گا
-window.addEventListener('hashchange', function() {
-    if (window.location.hash.replace('#', '') === 'profile') {
-        loadProfileSettings();
+const picInput = getEl('profilePicInput');
+
+getEl('profilePicUploadBtn').addEventListener('click', () => {
+    picInput.removeAttribute('capture');
+    picInput.click();
+});
+getEl('profilePicCameraBtn').addEventListener('click', () => {
+    picInput.setAttribute('capture', 'user');
+    picInput.click();
+});
+
+picInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    
+    if (file.size > 1048576) {
+        showToast('Image is too large! Please choose a smaller file (Max 1MB).');
+        return;
     }
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const base64String = event.target.result;
+        getEl('profilePicImg').src = base64String;
+        getEl('profilePicImg').style.display = 'block';
+        getEl('profilePicPlaceholder').style.display = 'none';
+        
+        const data = loadData();
+        if(!data.profile) data.profile = {};
+        data.profile.picture = base64String;
+        saveData(data);
+        showToast('Picture saved!');
+    };
+    reader.readAsDataURL(file);
+});
+
+getEl('profilePicClearBtn').addEventListener('click', () => {
+    getEl('profilePicImg').style.display = 'none';
+    getEl('profilePicImg').src = '';
+    getEl('profilePicPlaceholder').style.display = 'flex';
+    
+    const data = loadData();
+    if(data.profile) data.profile.picture = null;
+    saveData(data);
+    showToast('Picture removed!');
 });
 
 getEl('saveProfileBtn').addEventListener('click', () => {
@@ -603,6 +678,69 @@ getEl('saveProfileBtn').addEventListener('click', () => {
     saveData(data);
     showToast('Profile saved successfully!');
 });
+
+// ─── HISTORY TAB LOGIC ───
+function getCycleName(dateStr, startDay) {
+    const d = new Date(dateStr);
+    let year = d.getFullYear();
+    let month = d.getMonth();
+    let day = d.getDate();
+
+    if (day < startDay) {
+        month -= 1;
+        if (month < 0) { month = 11; year -= 1; }
+    }
+
+    const startDate = new Date(year, month, startDay);
+    const endDate = new Date(year, month + 1, startDay - 1);
+    
+    const sortKey = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    const options = { month: 'short', day: 'numeric' };
+    const label = `${startDate.toLocaleDateString('en-GB', options)} — ${endDate.toLocaleDateString('en-GB', options)}`;
+    
+    return { sortKey, label };
+}
+
+function renderHistoryTab() {
+    const data = loadData();
+    const shifts = data.shifts || [];
+    const settings = data.settings || getDefaultSettings();
+    const slabs = data.slabs || getDefaultSlabs();
+    const startDay = settings.cycleStartDay || 1;
+
+    const tbody = getEl('historyTableBody');
+    
+    if (!shifts.length) {
+        tbody.innerHTML = '';
+        getEl('emptyHistory').style.display = 'block';
+        return;
+    }
+    
+    getEl('emptyHistory').style.display = 'none';
+
+    const groupedShifts = {};
+    shifts.forEach(shift => {
+        if (!shift.date) return;
+        const cycleInfo = getCycleName(shift.date, startDay);
+        if (!groupedShifts[cycleInfo.sortKey]) {
+            groupedShifts[cycleInfo.sortKey] = { label: cycleInfo.label, shifts: [] };
+        }
+        groupedShifts[cycleInfo.sortKey].shifts.push(shift);
+    });
+
+    const sortedKeys = Object.keys(groupedShifts).sort().reverse();
+
+    tbody.innerHTML = sortedKeys.map(key => {
+        const group = groupedShifts[key];
+        const commData = calculateCommission(group.shifts, settings, slabs);
+        return `<tr>
+            <td style="font-weight:600;">${group.label}</td>
+            <td>${commData.totalCleanMoney.toFixed(2)} AED</td>
+            <td style="color:#166534; font-weight:700;">${commData.finalCommission.toFixed(2)} AED</td>
+        </tr>`;
+    }).join('');
+}
 
 // ─── OFFLINE/ONLINE NETWORK STATUS ───
 window.addEventListener('offline', () => getEl('offlineBadge').classList.add('show'));
