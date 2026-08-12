@@ -590,8 +590,9 @@ getEl('loginSubmitBtn').addEventListener('click', () => {
         .catch((error) => showToast(error.message));
 });
 
-// ─── AUTH STATE OBSERVER (BOOT) ───
+// ─── AUTH STATE OBSERVER (BOOT) WITH SPLASH REMOVAL ───
 auth.onAuthStateChanged((user) => {
+    const loadingScreen = getEl('app-loading-screen');
     if (user) {
         currentUser = user;
         db.collection('users').doc(user.uid).get().then((doc) => {
@@ -606,13 +607,16 @@ auth.onAuthStateChanged((user) => {
             updateHeaderAvatar();
             showScreen('main-app');
             switchTab('dashboard');
+            if(loadingScreen) loadingScreen.style.display = 'none'; // Hide loader
         }).catch(error => {
+            if(loadingScreen) loadingScreen.style.display = 'none';
             showToast("Error loading data: " + error.message);
         });
     } else {
         currentUser = null;
         appData = null;
         showScreen('login-screen');
+        if(loadingScreen) loadingScreen.style.display = 'none'; // Hide loader
     }
 });
 
