@@ -350,7 +350,6 @@ function loadRatesSettings() {
     getEl('settingOnlineCut').value = data.settings.onlineCut || 6.00;
     getEl('settingAirportCut').value = data.settings.airportCut || 20.00;
     getEl('settingFuelRate').value = data.settings.fuelRate || 0.60;
-    getEl('settingCycleStart').value = data.settings.cycleStartDay || 1;
 }
 
 getEl('saveSettingsBtn').addEventListener('click', () => {
@@ -359,9 +358,8 @@ getEl('saveSettingsBtn').addEventListener('click', () => {
     data.settings.onlineCut = Number(getEl('settingOnlineCut').value) || 0;
     data.settings.airportCut = Number(getEl('settingAirportCut').value) || 0;
     data.settings.fuelRate = Number(getEl('settingFuelRate').value) || 0;
-    data.settings.cycleStartDay = Number(getEl('settingCycleStart').value) || 1;
     saveData(data);
-    showToast('Settings saved');
+    showToast('Rates saved');
     renderDashboard();
 });
 
@@ -369,6 +367,7 @@ getEl('saveSettingsBtn').addEventListener('click', () => {
 function renderSlabTab() {
     const data = loadData();
     currentSlabs = data.slabs || getDefaultSlabs();
+    getEl('settingCycleStart').value = data.settings.cycleStartDay || 1;
     
     const tbody = getEl('slabTableBody');
     tbody.innerHTML = currentSlabs.map((s, i) => `
@@ -425,6 +424,18 @@ getEl('saveSlabsBtn').addEventListener('click', () => {
     saveData(data);
     showToast('Slabs saved');
     renderSlabTab();
+    renderDashboard();
+});
+
+getEl('saveCycleBtn').addEventListener('click', () => {
+    const data = loadData();
+    let start = Number(getEl('settingCycleStart').value) || 1;
+    if(start < 1) start = 1;
+    if(start > 28) start = 28;
+    data.settings.cycleStartDay = start;
+    saveData(data);
+    showToast('Cycle Start Date saved');
+    updateCycleDisplay();
     renderDashboard();
 });
 

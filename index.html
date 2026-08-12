@@ -220,7 +220,7 @@
         <!-- RATES TAB -->
         <div id="tab-rates" class="tab-content">
             <div class="card">
-                <div class="card-title">Cutting Rates & Cycle</div>
+                <div class="card-title">Cutting Rates</div>
                 <div class="form-group">
                     <label>Normal Trip Cut (AED)</label>
                     <input type="number" id="settingNormalCut" step="0.01" min="0" placeholder="0.00" />
@@ -237,12 +237,8 @@
                     <label>Fuel Rate (AED / km)</label>
                     <input type="number" id="settingFuelRate" step="0.01" min="0" placeholder="0.00" />
                 </div>
-                <div class="form-group" style="border-top: 1px solid #e6eaef; padding-top: 12px; margin-top: 12px;">
-                    <label style="color:#1a1f36; font-weight:700;">Cycle Start Date (e.g. 21 for Dubai Taxi)</label>
-                    <input type="number" id="settingCycleStart" min="1" max="28" placeholder="21" />
-                </div>
-                <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
-                <div id="settingsSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Settings saved!</div>
+                <button class="btn-primary" id="saveSettingsBtn" style="margin-top: 10px;">Save Rates</button>
+                <div id="settingsSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Rates saved!</div>
             </div>
         </div>
 
@@ -287,6 +283,17 @@
                 </div>
                 <button class="btn-primary" id="saveSlabsBtn" style="margin-top:10px;">Save Slabs</button>
                 <div id="slabSavedMsg" class="text-green-600 text-sm mt-1 opacity-0 transition">Slabs saved!</div>
+            </div>
+
+            <!-- CYCLE SETTINGS CARD -->
+            <div class="card">
+                <div class="card-title">Cycle Settings</div>
+                <div class="form-group">
+                    <label>Cycle Start Date (1 to 28)</label>
+                    <input type="number" id="settingCycleStart" min="1" max="28" placeholder="e.g. 21" />
+                </div>
+                <p style="font-size:12px; color:#6a7a8e; margin-top:4px;">End date is calculated automatically.</p>
+                <button class="btn-primary" id="saveCycleBtn" style="margin-top:10px;">Save Cycle Date</button>
             </div>
 
             <div class="card">
