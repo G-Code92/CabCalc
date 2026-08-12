@@ -590,7 +590,7 @@ getEl('loginSubmitBtn').addEventListener('click', () => {
         .catch((error) => showToast(error.message));
 });
 
-// ─── AUTH STATE OBSERVER (BOOT) WITH SPLASH REMOVAL ───
+// ─── AUTH STATE OBSERVER (BOOT) WITH PRESERVED TAB ON REFRESH ───
 auth.onAuthStateChanged((user) => {
     const loadingScreen = getEl('app-loading-screen');
     if (user) {
@@ -606,8 +606,12 @@ auth.onAuthStateChanged((user) => {
             }
             updateHeaderAvatar();
             showScreen('main-app');
-            switchTab('dashboard');
-            if(loadingScreen) loadingScreen.style.display = 'none'; // Hide loader
+            
+            // اگر یوزر نے ریفریش کیا ہے تو وہی ٹیب کھلے گا جو پہلے کھلا تھا (مثلاً settings یا slab)
+            const currentHash = window.location.hash.replace('#', '') || 'dashboard';
+            switchTab(currentHash);
+
+            if(loadingScreen) loadingScreen.style.display = 'none';
         }).catch(error => {
             if(loadingScreen) loadingScreen.style.display = 'none';
             showToast("Error loading data: " + error.message);
@@ -616,7 +620,7 @@ auth.onAuthStateChanged((user) => {
         currentUser = null;
         appData = null;
         showScreen('login-screen');
-        if(loadingScreen) loadingScreen.style.display = 'none'; // Hide loader
+        if(loadingScreen) loadingScreen.style.display = 'none';
     }
 });
 
@@ -736,6 +740,7 @@ getEl('profilePicCameraBtn').addEventListener('click', () => {
 });
 
 picInput.addEventListener('change', function(e) {
+    TheFile = e.target.files[0];
     const file = e.target.files[0];
     if(!file) return;
     
@@ -852,5 +857,3 @@ window.addEventListener('offline', () => {
     getEl('offlineBadge').classList.add('show');
 });
 window.addEventListener('online', () => getEl('offlineBadge').classList.remove('show'));
-
-
