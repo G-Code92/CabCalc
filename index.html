@@ -1,435 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>CabCalc — Shift Calculator</title>
-    <link rel="manifest" href="manifest.json" />
-    <meta name="theme-color" content="#f4f7f9" />
-    <link rel="icon" type="image/png" href="icon-512.png" />
-    
-    <link rel="stylesheet" href="style.css" />
-    
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CabCalc — Professional Shift & Cut Calculator for Drivers</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            line-height: 1.6;
+        }
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 50px 20px 35px;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+        .hero-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+        h1 span {
+            color: #3b82f6;
+        }
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #22c55e;
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: 700;
+            padding: 15px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 0 10px 25px -5px rgba(34, 197, 94, 0.4);
+            transition: transform 0.2s, background 0.2s;
+            width: 100%;
+            max-width: 300px;
+        }
+        .download-btn:hover {
+            background: #16a34a;
+            transform: translateY(-2px);
+        }
+        .security-note {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 14px;
+            color: #64748b;
+            font-size: 13px;
+        }
+        
+        /* Mockup Section */
+        .mockup-section {
+            max-width: 360px;
+            margin: -25px auto 30px;
+            padding: 0 20px;
+            text-align: center;
+        }
+        .phone-frame {
+            background: #1e293b;
+            border: 6px solid #334155;
+            border-radius: 30px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+        .phone-frame img {
+            width: 100%;
+            display: block;
+            border-radius: 24px;
+        }
+
+        /* Features Grid */
+        .features {
+            max-width: 750px;
+            margin: 0 auto;
+            padding: 20px 20px 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+        }
+        .feature-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 20px;
+            border-radius: 14px;
+        }
+        .feature-card h3 {
+            font-size: 16px;
+            margin-bottom: 6px;
+            color: #f1f5f9;
+            font-weight: 700;
+        }
+        .feature-card p {
+            color: #94a3b8;
+            font-size: 13.5px;
+            line-height: 1.5;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+            font-size: 13px;
+            border-top: 1px solid #1e293b;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- ─── AD BANNER CONTAINER ─── -->
-    <div id="ad-container" class="ad-banner">
-        <script>
-          atOptions = {
-            'key' : '67f192fc017aeb2ebebbea83c79e0e0b',
-            'format' : 'iframe',
-            'height' : 50,
-            'width' : 320,
-            'params' : {}
-          };
-        </script>
-        <script src="https://www.highperformanceformat.com/67f192fc017aeb2ebebbea83c79e0e0b/invoke.js"></script>
-    </div>
-
-    <!-- ─── INITIAL BOOT LOADING SCREEN ─── -->
-    <div id="app-loading-screen" style="position:fixed; inset:0; background:#f4f7f9; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999;">
-        <div style="font-size:36px; font-weight:700; color:#1a1f36; margin-bottom:10px;">Cab<span style="color:#4f8cff;">Calc</span></div>
-        <div style="color:#6a7a8e; font-size:14px;">Loading your workspace...</div>
-    </div>
-
-    <div id="offlineBadge" class="offline-badge">Internet connection required for the free version.</div>
-    <div id="toast" class="toast"></div>
-
-    <!-- ─── LOGIN ─── -->
-    <div id="login-screen" class="screen">
-        <div class="login-header">
-            <div class="logo"><img src="icon-512.png" alt="CabCalc Logo" style="width:70px; height:70px; border-radius:12px; object-fit:cover;" /></div>
-            <h1>CabCalc</h1>
-            <p>Professional Shift Calculator</p>
-        </div>
-
-        <div class="login-tabs" id="loginTabs">
-            <button class="active" data-tab="login">Log In</button>
-            <button data-tab="signup">Sign Up</button>
-        </div>
-
-        <div id="signupForm" class="login-form" style="display:none;">
-            <div class="form-group">
-                <label>First Name</label>
-                <input type="text" id="signupFirstName" placeholder="Ahmed" />
-            </div>
-            <div class="form-group">
-                <label>Last Name</label>
-                <input type="text" id="signupLastName" placeholder="Al Maktoum" />
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="signupEmail" placeholder="you@example.com" />
-            </div>
-            <div class="form-group">
-                <label>Phone Number</label>
-                <div class="input-with-prefix">
-                    <span class="prefix">+971</span>
-                    <input type="tel" id="signupPhone" placeholder="50 123 4567" maxlength="9" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="signupPassword" placeholder="Min 6 characters" />
-            </div>
-            <button class="btn-primary" id="signupSubmitBtn">Create Account</button>
-        </div>
-
-        <div id="loginForm" class="login-form">
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="loginEmail" placeholder="you@example.com" />
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="••••••••" />
-                <div class="forgot-pw-link" id="forgotPwLink">Forgot password?</div>
-            </div>
-            <button class="btn-primary" id="loginSubmitBtn">Log In</button>
-            <p style="text-align:center;margin-top:12px;font-size:13px;color:#6a7a8e;">
-                By continuing you agree to our Terms & Privacy.
-            </p>
-        </div>
-    </div>
-
-    <!-- ─── MAIN APP ─── -->
-    <div id="main-app" class="screen" style="display:none;">
-        <header class="app-header" style="position:relative;">
-            <div style="display: flex; align-items: center;">
-                <button id="headerBackBtn" style="display:none; font-size:22px; margin-right:12px; background:none; border:none; color:#1a1f36; padding-right:8px; line-height:1;">←</button>
-                <div class="brand"><img src="icon-512.png" alt="Logo" style="width:24px; height:24px; border-radius:6px; margin-right:6px;" /> Cab<span>Calc</span></div>
-            </div>
-            <button class="avatar-btn" id="profileBtn">
-                <span class="placeholder" id="avatarPlaceholder">👤</span>
-                <img id="avatarImage" style="display:none;" alt="avatar" />
-            </button>
-            <div class="dropdown" id="profileDropdown">
-                <button class="dropdown-item" data-action="dashboard">Dashboard</button>
-                <button class="dropdown-item" data-action="target">Slab & Cycle</button>
-                <button class="dropdown-item" data-action="cutting">Rates & Cutting</button>
-                <button class="dropdown-item" data-action="history">History</button>
-                <div class="divider"></div>
-                <button class="dropdown-item" data-action="settings">Settings</button>
-                <div class="divider"></div>
-                <button class="dropdown-item" data-action="logout" style="color:#dc2626;">Logout</button>
-            </div>
-        </header>
-
-        <!-- DASHBOARD TAB -->
-        <div id="tab-dashboard" class="tab-content active">
-            <div class="stats-grid">
-                <div class="stat">
-                    <div class="label">Shifts</div>
-                    <div class="value" id="shiftCount">0 shifts</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Total Clean Money</div>
-                    <div class="value" id="sumTotalRevenue">0.00 AED</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Total Commission</div>
-                    <div class="value" id="sumNet">0.00 AED</div>
-                </div>
-                <div class="stat">
-                    <div class="label">Current Slab</div>
-                    <div class="value" id="dashboardCommissionPct">— <span class="sub">no slab</span></div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <span>Shift Log</span>
-                    <span class="badge" id="shiftCountBadge">0</span>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Revenue</th>
-                                <th>Trips</th>
-                                <th>Airport</th>
-                                <th>Online</th>
-                                <th>Cut</th>
-                                <th>Fuel</th>
-                                <th>Tolls</th>
-                                <th>Clean Money</th>
-                                <th style="width:60px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="shiftTableBody"></tbody>
-                    </table>
-                    <div id="emptyShifts" class="empty-state" style="display:none;">No shifts logged yet.<br />Tap the + button to add one.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- RATES TAB -->
-        <div id="tab-rates" class="tab-content">
-            <div class="card">
-                <div class="card-title">Cutting Rates</div>
-                <div class="form-group">
-                    <label>Normal Trip Cut (AED)</label>
-                    <input type="number" id="settingNormalCut" step="0.01" min="0" placeholder="0.00" />
-                </div>
-                <div class="form-group">
-                    <label>Online Booking Trip Cut (AED)</label>
-                    <input type="number" id="settingOnlineCut" step="0.01" min="0" placeholder="0.00" />
-                </div>
-                <div class="form-group">
-                    <label>Airport Trip Cut (AED)</label>
-                    <input type="number" id="settingAirportCut" step="0.01" min="0" placeholder="0.00" />
-                </div>
-                <div class="form-group">
-                    <label>Fuel Rate (AED / km)</label>
-                    <input type="number" id="settingFuelRate" step="0.01" min="0" placeholder="0.00" />
-                </div>
-                <button class="btn-primary" id="saveSettingsBtn" style="margin-top: 10px;">Save Rates</button>
-            </div>
-        </div>
-
-        <!-- SLAB TAB -->
-        <div id="tab-slab" class="tab-content">
-            <div class="cycle-display" style="margin-bottom:14px;">
-                <div class="flex-between">
-                    <span class="label">Total Clean Money</span>
-                    <span class="sub" id="cycleRangeDisplay">—</span>
-                </div>
-                <div class="flex-between" style="margin-top:4px;">
-                    <span class="value" id="monthlyRevenue">0.00 AED</span>
-                    <span class="sub">Total</span>
-                </div>
-                <div class="flex-between" style="margin-top:4px;">
-                    <span class="value" id="slabDailyAverage">—</span>
-                    <span class="sub">Daily Avg</span>
-                </div>
-                <div class="flex-between" style="margin-top:4px;">
-                    <span class="value" id="slabCommissionPct">—</span>
-                    <span class="sub">Commission</span>
-                </div>
-                <div class="flex-between" style="margin-top:4px;">
-                    <span class="value" id="slabNetIncome">—</span>
-                    <span class="sub">Est. Income</span>
-                </div>
-                <div class="flex-between" style="margin-top:2px;font-size:13px;color:#6a7a8e;">
-                    <span>Matched Slab (Daily Avg): <strong id="matchedSlabDesc">—</strong></span>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-title">
-                    <span>Commission Slabs</span>
-                    <button class="btn-outline" id="addSlabRowBtn" style="padding:2px 12px;font-size:12px;">+ Add</button>
-                </div>
-                <div class="table-wrap slab-table">
-                    <table>
-                        <thead><tr><th>Min (AED)</th><th>Max (AED)</th><th>%</th><th style="width:36px;"></th></tr></thead>
-                        <tbody id="slabTableBody"></tbody>
-                    </table>
-                </div>
-                <button class="btn-primary" id="saveSlabsBtn" style="margin-top:10px;">Save Slabs</button>
-            </div>
-
-            <div class="card">
-                <div class="card-title">Cycle Settings</div>
-                <div class="form-group">
-                    <label>Cycle Start Date (1 to 28)</label>
-                    <input type="number" id="settingCycleStart" min="1" max="28" placeholder="e.g. 21" />
-                </div>
-                <p style="font-size:12px; color:#6a7a8e; margin-top:4px;">End date is calculated automatically.</p>
-                <button class="btn-primary" id="saveCycleBtn" style="margin-top:10px;">Save Cycle Date</button>
-            </div>
+    <header>
+        <div class="hero-container">
+            <div class="logo-badge">Lightweight & Fast Calculator</div>
+            <h1>Professional Shift & Cut Calculator for <span>CabCalc</span></h1>
+            <p class="subtitle">The ultimate shift, commission slab, and net calculation tool designed specifically for modern drivers.</p>
             
-            <div class="card">
-                <div class="card-title">Auto‑Fill Slabs</div>
-                <p class="text-sm text-muted" style="margin-bottom:8px;">Upload or capture a slab table image to extract values.</p>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <button class="btn-outline" id="slabImageInput" style="flex:1;padding:8px;">Upload</button>
-                    <button class="btn-outline" id="slabCameraBtn" style="flex:1;padding:8px;">Camera</button>
-                    <button class="btn-primary" id="slabOcrBtn" style="flex:1.5;padding:8px;" disabled>Auto‑Fill</button>
-                </div>
-                <input type="file" id="slabImageInputFile" accept="image/*" style="display:none;" />
-                <div class="slab-image-preview" id="slabImagePreview"><div class="empty">No image loaded</div></div>
-                <div id="ocrStatus" class="ocr-status hidden"></div>
+            <a href="CabCalc.apk" class="download-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download APK (Free)
+            </a>
+            
+            <div class="security-note">
+                <span>Direct Download</span> • <span>No Ads in Core App</span>
             </div>
         </div>
+    </header>
 
-        <!-- NEW SETTINGS & PROFILE TAB (Clean Professional List Style) -->
-        <div id="tab-settings" class="tab-content">
-            <div class="card">
-                <div class="profile-pic-wrap">
-                    <div class="pic-preview" id="profilePicPreview">
-                        <img id="profilePicImg" style="display:none;" alt="profile" />
-                        <span id="profilePicPlaceholder" style="font-size:40px;">👤</span>
-                    </div>
-                    <div class="pic-actions">
-                        <button id="profilePicUploadBtn">Upload</button>
-                        <button id="profilePicCameraBtn">Camera</button>
-                        <button id="profilePicClearBtn" style="color:#dc2626;">Clear</button>
-                    </div>
-                    <input type="file" id="profilePicInput" accept="image/*" style="display:none;" />
-                </div>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="profileName" placeholder="Ahmed Al Maktoum" />
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <div class="input-with-prefix">
-                        <span class="prefix">+971</span>
-                        <input type="tel" id="profilePhone" placeholder="50 123 4567" maxlength="9" />
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="profileEmail" placeholder="you@example.com" disabled style="background:#e6eaef; color:#6a7a8e;" />
-                </div>
-                <button class="btn-primary" id="saveProfileBtn">Save Profile</button>
-            </div>
-
-            <!-- PROFESSIONAL CLEAN LIST FOR ACTIONS & LEGAL -->
-            <div class="card" style="padding: 6px 0;">
-                <div style="padding: 10px 16px; font-size: 13px; font-weight: 600; color: #6a7a8e; text-transform: uppercase; letter-spacing: 0.3px;">App Actions & Legal</div>
-                <button class="dropdown-item" id="btnExportBackup" style="padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f3f8; display:flex; align-items:center; width:100%; background:none; border-top:none; border-left:none; border-right:none; text-align:left; cursor:pointer;">Export Data Backup (JSON)</button>
-                <button class="dropdown-item" id="btnTerms" style="padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f3f8; display:flex; align-items:center; width:100%; background:none; border:none; text-align:left; cursor:pointer;">Terms, Privacy & Disclaimer</button>
-                <button class="dropdown-item" id="btnFeedback" style="padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #f0f3f8; display:flex; align-items:center; width:100%; background:none; border:none; text-align:left; cursor:pointer;">Send Feedback</button>
-                <button class="dropdown-item" id="btnDeleteAccount" style="padding: 12px 16px; font-size: 14px; color: #dc2626; display:flex; align-items:center; width:100%; background:none; border:none; text-align:left; cursor:pointer;">Delete Account</button>
-            </div>
-        </div>
-        
-        <!-- HISTORY TAB -->
-        <div id="tab-history" class="tab-content">
-            <div class="card">
-                <div class="card-title">Past Months History</div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Cycle Period</th>
-                                <th>Clean Money</th>
-                                <th>Commission</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyTableBody"></tbody>
-                    </table>
-                    <div id="emptyHistory" class="empty-state" style="display:none;">No history available yet.</div>
-                </div>
-            </div>
-        </div>
-
-        <button class="fab-download" id="fabDownload" aria-label="Download Report">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="7 10 12 15 17 10"></polyline>
-                <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-        </button>
-        <button class="fab" id="fabOpen" aria-label="Add shift">+</button>
-    </div>
-
-    <!-- ─── SHIFT MODAL ─── -->
-    <div class="modal-overlay" id="shiftModal">
-        <div class="modal">
-            <div class="modal-header">
-                <div>
-                    <h2 id="shiftModalTitle">New Shift Entry</h2>
-                    <div class="sub" id="shiftModalSub">Enter today's shift details — calculations are automatic.</div>
-                </div>
-                <button class="close-btn" id="modalClose">✕</button>
-            </div>
-            <form id="shiftForm">
-                <input type="hidden" id="shiftEditIndex" value="-1" />
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="shiftDate" />
-                </div>
-                <div class="form-group">
-                    <label>Gross Revenue (AED)</label>
-                    <input type="number" id="shiftRevenue" step="0.01" min="0" placeholder="0.00" />
-                </div>
-                <div class="form-group">
-                    <label>Total Trips</label>
-                    <input type="number" id="shiftTotalTrips" step="1" min="0" placeholder="0" />
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div class="form-group">
-                        <label>Airport Trips</label>
-                        <input type="number" id="shiftAirport" step="1" min="0" value="0" />
-                    </div>
-                    <div class="form-group">
-                        <label>Online Bookings</label>
-                        <input type="number" id="shiftOnline" step="0" min="0" value="0" />
-                    </div>
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div class="form-group">
-                        <label>Hired KMs (With Customer)</label>
-                        <input type="number" id="shiftHiredKm" step="0.1" min="0" placeholder="0.00" />
-                    </div>
-                    <div class="form-group">
-                        <label>Salik / Tolls (AED)</label>
-                        <input type="number" id="shiftTolls" step="0.01" min="0" placeholder="0.00" />
-                    </div>
-                </div>
-
-                <div style="background:#f4f7f9;border-radius:10px;padding:12px;margin:10px 0;border:1px solid #e6eaef;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:14px;">
-                        <span class="text-muted">Normal Trips</span><span id="previewNormal" class="font-bold">0</span>
-                        <span class="text-muted">Company Cut</span><span id="previewCompanyCut" class="font-bold">0.00 AED</span>
-                        <span class="text-muted">Fuel Cost</span><span id="previewFuel" class="font-bold">0.00 AED</span>
-                        <span class="text-muted">Tolls</span><span id="previewTolls" class="font-bold">0.00 AED</span>
-                        <span class="text-muted" style="font-weight:600;">Clean Money</span><span id="previewNet" class="font-bold" style="color:#166534;">0.00 AED</span>
-                    </div>
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button type="button" class="btn-secondary" id="shiftCancelBtn" style="flex:1;">Cancel</button>
-                    <button type="submit" class="btn-primary" id="shiftSubmitBtn" style="flex:2;">Save Shift</button>
-                </div>
-            </form>
+    <div class="mockup-section">
+        <div class="phone-frame">
+            <img src="icon-512.png" alt="CabCalc Dashboard Preview">
         </div>
     </div>
 
-    <!-- ─── MODALS ─── -->
-    <div class="modal-overlay" id="termsModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Terms & Privacy</h2>
-                <button class="close-btn" id="termsModalClose">✕</button>
-            </div>
-            <div style="font-size:14px;color:#4a5a6e;line-height:1.6;max-height:50vh;overflow-y:auto;padding-right:4px;">
-                <p><strong>CabCalc</strong> is a driver earnings calculating tool. To keep your records safe and synced across devices, your data is securely stored on the cloud using Google Firebase.</p>
-                <p style="margin-top:8px;">We do not sell, trade, or share your personal data with any third-party marketing agencies.</p>
-                <div style="margin-top:12px; padding:10px; background:#fff3cd; color:#856404; border-radius:8px; border:1px solid #ffeeba; font-size:13px; line-height:1.5;">
-                    <strong style="display:block; margin-bottom:4px;">⚠️ Disclaimer:</strong> 
-                    This application is an independent calculator designed for personal use by drivers. The calculations provided are estimates based solely on the values entered by the user. CabCalc is not affiliated with any official taxi company, and these estimates may not exactly match your official payroll or company deductions.
-                </div>
-            </div>
-            <button class="btn-primary" id="termsAcceptBtn" style="margin-top:12px;">I Understand</button>
+    <div class="features">
+        <div class="feature-card">
+            <h3>Cutting & Rates Setup</h3>
+            <p>Go to Rates & Cutting in the menu, set your normal, online, or airport trip cuts and fuel rates easily.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Cycle & Slabs Target</h3>
+            <p>Head over to Slab & Cycle to define your commission targets and choose the exact start date of your monthly cycle.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Automatic Calculations</h3>
+            <p>Instantly compute net clean money after deducting company cuts, fuel costs, and tolls with zero hassle.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Cloud Synced</h3>
+            <p>Your shift logs and financial history are securely saved across all your devices via Firebase.</p>
         </div>
     </div>
 
-    <div class="modal-overlay" id="feedbackModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>Feedback</h2>
-                <button class="close-btn" id="feedbackModalClose">✕</button>
-            </div>
-            <form id="feedbackForm">
-                <div class="form-group">
-                    <label>Your Message</label>
-                    <textarea id="feedbackMessage" rows="4" style="width:100%;padding:10px;border-radius:10px;background:#f0f3f8;border:1px solid transparent;"></textarea>
-                </div>
-                <button class="btn-primary" type="submit">Send</button>
-            </form>
-        </div>
-    </div>
+    <footer>
+        <p>&copy; 2026 CabCalc. All rights reserved. Designed for Professional Drivers.</p>
+    </footer>
 
-    <script src="app.js"></script>
 </body>
 </html>
