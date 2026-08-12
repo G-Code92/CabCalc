@@ -108,6 +108,27 @@ function calculateCommission(shifts, settings, slabs) {
     return { totalCleanMoney, dailyAverage, matchedSlab, finalCommission };
 }
 
+// ─── CYCLE FILTER LOGIC ───
+function getCurrentCycleShifts(shifts, startDay) {
+    const now = new Date();
+    let year = now.getFullYear();
+    let month = now.getMonth();
+    let day = now.getDate();
+
+    if (day < startDay) {
+        month -= 1;
+        if (month < 0) { month = 11; year -= 1; }
+    }
+    const cycleStart = new Date(year, month, startDay);
+    
+    return shifts.filter(s => {
+        if (!s.date) return false;
+        const shiftDate = new Date(s.date);
+        shiftDate.setHours(0,0,0,0);
+        return shiftDate >= cycleStart;
+    });
+}
+
 // ─── UI UPDATES ───
 let toastTimer = null;
 function showToast(msg, duration = 2500) {
@@ -174,19 +195,21 @@ getEl('headerBackBtn').addEventListener('click', () => window.history.back());
 
 function renderDashboard() {
     const data = loadData();
-    const shifts = data.shifts || [];
     const settings = data.settings || getDefaultSettings();
     const slabs = data.slabs || getDefaultSlabs();
+    const allShifts = data.shifts || [];
+    
+    const currentShifts = getCurrentCycleShifts(allShifts, settings.cycleStartDay || 1);
 
-    getEl('shiftCount').textContent = shifts.length + ' shift' + (shifts.length !== 1 ? 's' : '');
+    getEl('shiftCount').textContent = currentShifts.length + ' shift' + (currentShifts.length !== 1 ? 's' : '');
 
     const tbody = getEl('shiftTableBody');
-    if (!shifts.length) {
+    if (!currentShifts.length) {
         tbody.innerHTML = '';
         getEl('emptyShifts').style.display = 'block';
     } else {
         getEl('emptyShifts').style.display = 'none';
-        const sorted = [...shifts].sort((a, b) => new Date(b.date) - new Date(a.date));
+        const sorted = [...currentShifts].sort((a, b) => new Date(b.date) - new Date(a.date));
         tbody.innerHTML = sorted.map(shift => {
             const calc = calculateShift(
                 shift.revenue || 0, shift.totalTrips || 0, shift.airportTrips || 0, 
@@ -226,7 +249,9 @@ window.deleteShift = function(idx) {
 
 function updateStats() {
     const data = loadData();
-    const commData = calculateCommission(data.shifts, data.settings, data.slabs);
+    const currentShifts = getCurrentCycleShifts(data.shifts || [], data.settings.cycleStartDay || 1);
+    const commData = calculateCommission(currentShifts, data.settings, data.slabs);
+    
     getEl('sumTotalRevenue').textContent = commData.totalCleanMoney.toFixed(2) + ' AED';
     getEl('sumNet').textContent = commData.finalCommission.toFixed(2) + ' AED';
 
@@ -367,7 +392,9 @@ function renderSlabTab() {
 
 function updateCycleDisplay() {
     const data = loadData();
-    const commData = calculateCommission(data.shifts, data.settings, currentSlabs);
+    const currentShifts = getCurrentCycleShifts(data.shifts || [], data.settings.cycleStartDay || 1);
+    const commData = calculateCommission(currentShifts, data.settings, currentSlabs);
+    
     getEl('monthlyRevenue').textContent = commData.totalCleanMoney.toFixed(2) + ' AED';
     getEl('slabDailyAverage').textContent = commData.dailyAverage.toFixed(2) + ' AED';
     
