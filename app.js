@@ -56,7 +56,7 @@ function getDefaultSlabs() {
 // ─── FIRESTORE DATA HANDLING ───
 function loadData() {
     if (!appData) {
-        return { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs(), profile: { name: '', phone: '', email: '', picture: null } };
+        return { shifts: [], settings: getDefaultSettings(), slabs: getDefaultSlabs(), profile: { name: '', phone: '', email: '', picture: null, gender: '' } };
     }
     return appData;
 }
@@ -579,15 +579,41 @@ document.querySelectorAll('.login-tabs button').forEach(btn => {
 });
 
 getEl('signupSubmitBtn').addEventListener('click', () => {
-    const email = getEl('signupEmail').value;
+    const fName = getEl('signupFirstName').value.trim();
+    const lName = getEl('signupLastName').value.trim();
+    const email = getEl('signupEmail').value.trim();
+    const phone = getEl('signupPhone').value.trim();
+    const gender = getEl('signupGender').value; // Added Gender Field
     const pass = getEl('signupPassword').value;
     
+    if (!gender) {
+        showToast('Please select your gender');
+        return;
+    }
+
     if (!email || pass.length < 6) {
         showToast('Enter a valid email and 6+ chars password');
         return;
     }
     
     auth.createUserWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+            // اکاؤنٹ بنتے ہی یوزر کا نام، فون نمبر، اور جینڈر فائر بیس ڈیٹا بیس کی پروفائل میں سیو کروانا
+            const user = userCredential.user;
+            const newUserData = {
+                shifts: [],
+                settings: getDefaultSettings(),
+                slabs: getDefaultSlabs(),
+                profile: {
+                    name: (fName + ' ' + lName).trim(),
+                    phone: phone,
+                    email: email,
+                    gender: gender, // Added Gender to Database
+                    picture: null
+                }
+            };
+            db.collection('users').doc(user.uid).set(newUserData);
+        })
         .catch((error) => showToast(error.message));
 });
 
@@ -728,6 +754,7 @@ function loadProfileSettings() {
         getEl('profileName').value = data.profile.name || '';
         getEl('profilePhone').value = data.profile.phone || '';
         getEl('profileEmail').value = currentUser ? currentUser.email : (data.profile.email || '');
+        getEl('profileGender').value = data.profile.gender || ''; // Added Gender Load Logic
         
         if (data.profile.picture) {
             getEl('profilePicImg').src = data.profile.picture;
@@ -797,6 +824,7 @@ getEl('saveProfileBtn').addEventListener('click', () => {
     if (!data.profile) data.profile = {};
     data.profile.name = getEl('profileName').value;
     data.profile.phone = getEl('profilePhone').value;
+    data.profile.gender = getEl('profileGender').value; // Added Gender Save Logic
     saveData(data);
     updateHeaderAvatar();
     showToast('Profile saved successfully!');
