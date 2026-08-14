@@ -857,3 +857,19 @@ window.addEventListener('offline', () => {
     getEl('offlineBadge').classList.add('show');
 });
 window.addEventListener('online', () => getEl('offlineBadge').classList.remove('show'));
+
+// Dropdown Menu Invite Button Logic
+getEl('btnInviteDropdown').addEventListener('click', () => {
+    getEl('profileDropdown').classList.remove('open');
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'CabCalc',
+            text: 'Check out CabCalc - The ultimate shift and commission calculator designed for drivers!',
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(window.location.href);
+        showToast('App link copied to clipboard!');
+    }
+});
