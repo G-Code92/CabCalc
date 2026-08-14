@@ -32,12 +32,26 @@ function getDefaultSettings() {
 
 function getDefaultSlabs() {
     return [
-        { min: 0, max: 200, pct: 20 },
-        { min: 201, max: 300, pct: 25 },
-        { min: 301, max: 400, pct: 30 },
-        { min: 401, max: 9999, pct: 35 }
+        { min: 0, max: 94.99, pct: 0 },
+        { min: 95, max: 139.99, pct: 5 },
+        { min: 140, max: 164.99, pct: 7.5 },
+        { min: 165, max: 189.99, pct: 10 },
+        { min: 190, max: 224.99, pct: 12.5 },
+        { min: 225, max: 239.99, pct: 15 },
+        { min: 240, max: 264.99, pct: 17.5 },
+        { min: 265, max: 289.99, pct: 20 },
+        { min: 290, max: 314.99, pct: 22.5 },
+        { min: 315, max: 339.99, pct: 25 },
+        { min: 340, max: 369.99, pct: 27.5 },
+        { min: 370, max: 394.99, pct: 30 },
+        { min: 395, max: 419.99, pct: 32.5 },
+        { min: 420, max: 534.99, pct: 35 },
+        { min: 535, max: 649.99, pct: 36 },
+        { min: 650, max: 799.99, pct: 37 },
+        { min: 800, max: 99999, pct: 38 } // 2100 کی جگہ 99999 رکھا گیا ہے تاکہ اگر کوئی اس سے بھی زیادہ کمائے تو سسٹم کریش نہ ہو۔
     ];
 }
+
 
 // ─── FIRESTORE DATA HANDLING ───
 function loadData() {
